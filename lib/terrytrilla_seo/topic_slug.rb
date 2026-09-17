@@ -43,11 +43,17 @@ module ::TerrytrillaSeo
       candidate == PLACEHOLDER ? nil : candidate
     end
 
-    # Recompute and store the slug of one topic. Returns [old, new] when it changed.
+    # Store the slug from the English title of one topic. Returns [old, new] when it changed.
+    #
+    # ⚠️ Only ever moves a slug TO the English one. On 17.09 the first rollout recomputed
+    # with core's generator instead, and two topics whose slugs had been transliterated
+    # when the forum still ran in Russian (t/2, t/6 — no English translation) became
+    # `topic`. A topic without an English title keeps whatever slug it has.
     def self.recompute!(topic)
       return nil unless active?
-      wanted = topic.slug_for_topic(topic.title)
-      return nil if wanted.blank? || wanted == topic.read_attribute(:slug)
+      return nil unless non_latin?(topic.title)
+      wanted = english_slug(topic)
+      return nil if wanted.nil? || wanted == topic.read_attribute(:slug)
       old = topic.read_attribute(:slug)
       topic.update_column(:slug, wanted)
       [old, wanted]

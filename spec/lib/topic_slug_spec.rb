@@ -88,5 +88,23 @@ RSpec.describe TerrytrillaSeo::TopicSlug do
       expect(topic.reload.slug).to eq("syncopation-in-the-accompaniment")
       expect(described_class.recompute_all!).to eq([])
     end
+
+    # 17.09 on production: t/2 and t/6 lost their transliterated slugs to `topic`.
+    it "leaves a topic without an English title as it is" do
+      topic = Fabricate(:topic, title: "Описание категории Персонал")
+      topic.update_column(:slug, "opisanie-kategorii-personal")
+
+      expect(described_class.recompute_all!).to eq([])
+      expect(topic.reload.slug).to eq("opisanie-kategorii-personal")
+    end
+
+    it "leaves a Latin-script topic as it is" do
+      topic = Fabricate(:topic, title: "Campo harmônico menor: por que o V grau vira maior?")
+      translate(topic, "Minor key chords: why is the V chord major?")
+      topic.update_column(:slug, "old-slug")
+
+      expect(described_class.recompute_all!).to eq([])
+      expect(topic.reload.slug).to eq("old-slug")
+    end
   end
 end
