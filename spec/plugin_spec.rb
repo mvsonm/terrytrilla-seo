@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe "terrytrilla-seo" do
+RSpec.describe TerrytrillaSeo do
   it "is registered with Discourse" do
     expect(Discourse.plugins.map(&:name)).to include("terrytrilla-seo")
   end
