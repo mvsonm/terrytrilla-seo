@@ -17,6 +17,7 @@ require_relative "lib/terrytrilla_seo/topic_slug"
 require_relative "lib/terrytrilla_seo/indexing"
 require_relative "lib/terrytrilla_seo/crawler_locale"
 require_relative "lib/terrytrilla_seo/hreflang"
+require_relative "lib/terrytrilla_seo/crawler_locale_redirect"
 
 after_initialize do
   # Every change to core behaviour is listed in README.md («Core touch points»),
@@ -63,6 +64,14 @@ after_initialize do
 
   # ── B12: crawler language on a URL without ?tl ─────────────────────────────
   Discourse.singleton_class.prepend(TerrytrillaSeo::CrawlerLocale)
+
+  # ── B2: ?tl=en → 301 without tl, ?tl=pl → ?tl=pl_PL — crawlers only ──────────
+  # Prepended so the redirect happens before any rendering. AnonymousCache stores only 200
+  # and CrawlerHooks rewrites only 200, so nothing downstream intercepts the 301.
+  ApplicationController.prepend_before_action do
+    target = TerrytrillaSeo::CrawlerLocaleRedirect.target(request)
+    redirect_to(target, status: :moved_permanently) if target
+  end
 
   # ── B1: hreflang only for translated languages ─────────────────────────────
   # Overrides core's common/_hreflang_tags partial (crawler layout). The view path is

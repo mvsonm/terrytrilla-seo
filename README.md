@@ -43,6 +43,7 @@ against this list.
 | `plugin.rb` | `TopicsController.after_action(only: :show)` — `X-Robots-Tag: noindex` | B3: non-indexable topics; skipped while `allow_index_in_robots_txt` is off, otherwise it would weaken core’s `noindex, nofollow` |
 | `plugin.rb` | `register_html_builder` `server:before-head-close` and `-crawler` — meta robots | B3: the same rule in both layouts |
 | `app/views/common/_hreflang_tags.html.erb` + `prepend_view_path` in `plugin.rb` | overrides core’s partial of the same name (crawler layout) | B1: a topic page declares only translated languages; every other page renders core’s markup, **copied into the partial — compare it with core’s file on every upgrade** |
+| `plugin.rb` | `ApplicationController.prepend_before_action` — 301 | B2: for a crawler `?tl=en` → URL without `tl` (other parameters kept), `?tl=pl` → `?tl=pl_PL`; people never redirected; AnonymousCache and CrawlerHooks handle only 200, so nothing intercepts it |
 | `lib/terrytrilla_seo/crawler_locale.rb` | `Discourse.singleton_class.prepend` — `anonymous_locale` | B12: a crawler without `?tl` gets the default language, Accept-Language ignored; the anonymous cache key uses the same method |
 
 ## Indexing rule (B3)
