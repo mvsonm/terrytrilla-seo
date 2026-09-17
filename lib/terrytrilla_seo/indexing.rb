@@ -37,6 +37,30 @@ module ::TerrytrillaSeo
       topic.posts_count.to_i > 1
     end
 
+    # The same rule as SQL, for lists of topics (B10 sitemap, B13 home page).
+    # ⚠️ Must stay equal to indexable? — a spec compares both on the same topics.
+    def self.indexable_scope(relation)
+      ids = indexable_category_ids
+      return relation.none if ids.empty?
+
+      kb = knowledge_base_category_ids
+      answered =
+        (
+          if kb.empty?
+            "topics.posts_count > 1"
+          else
+            ["topics.category_id IN (?) OR topics.posts_count > 1", kb]
+          end
+        )
+
+      relation
+        .where(archetype: Archetype.default, visible: true, category_id: ids)
+        .joins(:category)
+        .where(categories: { read_restricted: false })
+        .where("NOT EXISTS (SELECT 1 FROM categories c WHERE c.topic_id = topics.id)")
+        .where(answered)
+    end
+
     def self.noindex_for?(topic)
       SiteSetting.terrytrilla_seo_enabled && !indexable?(topic)
     end

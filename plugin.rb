@@ -18,6 +18,7 @@ require_relative "lib/terrytrilla_seo/indexing"
 require_relative "lib/terrytrilla_seo/crawler_locale"
 require_relative "lib/terrytrilla_seo/hreflang"
 require_relative "lib/terrytrilla_seo/crawler_locale_redirect"
+require_relative "lib/terrytrilla_seo/sitemap_topics"
 
 after_initialize do
   # Every change to core behaviour is listed in README.md («Core touch points»),
@@ -72,6 +73,9 @@ after_initialize do
     target = TerrytrillaSeo::CrawlerLocaleRedirect.target(request)
     redirect_to(target, status: :moved_permanently) if target
   end
+
+  # ── B10: sitemap only from indexable topics ────────────────────────────────
+  Sitemap.prepend(TerrytrillaSeo::SitemapTopics)
 
   # ── B1: hreflang only for translated languages ─────────────────────────────
   # Overrides core's common/_hreflang_tags partial (crawler layout). The view path is
