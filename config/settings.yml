@@ -18,3 +18,6 @@ plugins:
     list_type: compact
     default: ""
     client: false
+  terrytrilla_seo_og_card_base:
+    default: "https://terrytrilla.com/api/og/forum"
+    client: false

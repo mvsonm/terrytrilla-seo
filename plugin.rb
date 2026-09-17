@@ -19,6 +19,7 @@ require_relative "lib/terrytrilla_seo/crawler_locale"
 require_relative "lib/terrytrilla_seo/hreflang"
 require_relative "lib/terrytrilla_seo/crawler_locale_redirect"
 require_relative "lib/terrytrilla_seo/sitemap_topics"
+require_relative "lib/terrytrilla_seo/topic_meta"
 
 after_initialize do
   # Every change to core behaviour is listed in README.md («Core touch points»),
@@ -76,6 +77,9 @@ after_initialize do
 
   # ── B10: sitemap only from indexable topics ────────────────────────────────
   Sitemap.prepend(TerrytrillaSeo::SitemapTopics)
+
+  # ── B4, B5: link card and Open Graph of a topic page ───────────────────────
+  ApplicationHelper.prepend(TerrytrillaSeo::TopicMeta::Helper)
 
   # ── B1: hreflang only for translated languages ─────────────────────────────
   # Overrides core's common/_hreflang_tags partial (crawler layout). The view path is
