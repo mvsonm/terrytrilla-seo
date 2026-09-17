@@ -21,14 +21,18 @@ RSpec.describe TerrytrillaSeo::Indexing do
   before do
     SiteSetting.allow_index_in_robots_txt = true
     SiteSetting.terrytrilla_seo_enabled = true
-    SiteSetting.terrytrilla_seo_indexable_categories = "#{knowledge_base.id}|#{questions.id}|#{drafts.id}"
+    SiteSetting.terrytrilla_seo_indexable_categories =
+      "#{knowledge_base.id}|#{questions.id}|#{drafts.id}"
     SiteSetting.terrytrilla_seo_knowledge_base_categories = knowledge_base.id.to_s
   end
 
   def robots_of(topic)
     get "/t/#{topic.slug}/#{topic.id}"
     expect(response.status).to eq(200)
-    [response.headers["X-Robots-Tag"], response.body.include?('<meta name="robots" content="noindex">')]
+    [
+      response.headers["X-Robots-Tag"],
+      response.body.include?('<meta name="robots" content="noindex">'),
+    ]
   end
 
   it "does not index an unanswered question" do
@@ -72,7 +76,10 @@ RSpec.describe TerrytrillaSeo::Indexing do
   end
 
   it "adds the meta tag to the crawler view as well" do
-    get "/t/#{question.slug}/#{question.id}", headers: { "User-Agent" => "Googlebot/2.1 (+http://www.google.com/bot.html)" }
+    get "/t/#{question.slug}/#{question.id}",
+        headers: {
+          "User-Agent" => "Googlebot/2.1 (+http://www.google.com/bot.html)",
+        }
     expect(response.body).to include('<meta name="robots" content="noindex">')
     expect(response.headers["X-Robots-Tag"]).to eq("noindex")
   end
