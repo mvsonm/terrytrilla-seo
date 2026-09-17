@@ -13,3 +13,8 @@ plugins:
     type: category_list
     default: ""
     client: false
+  terrytrilla_seo_hreflang_excluded_locales:
+    type: list
+    list_type: compact
+    default: ""
+    client: false

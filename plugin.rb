@@ -16,6 +16,7 @@ end
 require_relative "lib/terrytrilla_seo/topic_slug"
 require_relative "lib/terrytrilla_seo/indexing"
 require_relative "lib/terrytrilla_seo/crawler_locale"
+require_relative "lib/terrytrilla_seo/hreflang"
 
 after_initialize do
   # Every change to core behaviour is listed in README.md («Core touch points»),
@@ -62,4 +63,9 @@ after_initialize do
 
   # ── B12: crawler language on a URL without ?tl ─────────────────────────────
   Discourse.singleton_class.prepend(TerrytrillaSeo::CrawlerLocale)
+
+  # ── B1: hreflang only for translated languages ─────────────────────────────
+  # Overrides core's common/_hreflang_tags partial (crawler layout). The view path is
+  # global, so the partial itself falls back to core's markup when the plugin is off.
+  ::ActionController::Base.prepend_view_path File.expand_path("../app/views", __FILE__)
 end

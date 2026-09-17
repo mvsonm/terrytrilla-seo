@@ -4,3 +4,4 @@ en:
     terrytrilla_seo_freeze_slugs: "Never change topic URLs again. Turn on once the forum is open to search engines: every slug change after indexing is a redirect."
     terrytrilla_seo_indexable_categories: "The only categories whose topics may be indexed. A category not listed here is never indexed, even if it becomes public."
     terrytrilla_seo_knowledge_base_categories: "Knowledge-base categories: their articles are indexable without replies. Must also be listed in indexable categories."
+    terrytrilla_seo_hreflang_excluded_locales: "Languages removed from hreflang by hand (e.g. de, pt_BR), for example when search drops one translated language. A topic's original language is always declared."

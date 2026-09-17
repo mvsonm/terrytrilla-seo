@@ -25,6 +25,7 @@ Settings:
 | `terrytrilla_seo_freeze_slugs` | false | never change topic URLs again — turn on when the forum opens to search |
 | `terrytrilla_seo_indexable_categories` | — | the ONLY categories whose topics may be indexed |
 | `terrytrilla_seo_knowledge_base_categories` | — | articles indexable without replies (must also be in the list above) |
+| `terrytrilla_seo_hreflang_excluded_locales` | — | languages removed from hreflang by hand; the original language of a topic is always declared |
 
 One-off task after installing: `bin/rake terrytrilla_seo:recompute_slugs`.
 
@@ -41,11 +42,16 @@ against this list.
 | `plugin.rb` | modifier `redirect_to_correct_topic_additional_query_parameters` + `:tl` | B8: the 301 from an old topic URL kept dropping the language |
 | `plugin.rb` | `TopicsController.after_action(only: :show)` — `X-Robots-Tag: noindex` | B3: non-indexable topics; skipped while `allow_index_in_robots_txt` is off, otherwise it would weaken core’s `noindex, nofollow` |
 | `plugin.rb` | `register_html_builder` `server:before-head-close` and `-crawler` — meta robots | B3: the same rule in both layouts |
+| `app/views/common/_hreflang_tags.html.erb` + `prepend_view_path` in `plugin.rb` | overrides core’s partial of the same name (crawler layout) | B1: a topic page declares only translated languages; every other page renders core’s markup, **copied into the partial — compare it with core’s file on every upgrade** |
 | `lib/terrytrilla_seo/crawler_locale.rb` | `Discourse.singleton_class.prepend` — `anonymous_locale` | B12: a crawler without `?tl` gets the default language, Accept-Language ignored; the anonymous cache key uses the same method |
 
 ## Indexing rule (B3)
 
 `TerrytrillaSeo::Indexing.indexable?(topic)` — one method for every task that needs it (hreflang, meta robots, sitemap, home page). A topic is indexable when it is a regular visible topic, its category is public and in the explicit list, it is not a category description, and it is either a knowledge-base article or has at least one reply.
+
+## hreflang (B1)
+
+`TerrytrillaSeo::Hreflang.locales_for(topic)`. A language is declared when it is the topic’s original language, or the title is translated into it **and** every visible post is written in it or translated into it. Languages are compared by base (`pt` = `pt_BR`), as the AI translator does. A topic without a detected language gets only `x-default`; a non-indexable topic (B3) gets no hreflang. The default language (`en`) and `x-default` point at the URL without `?tl`. `has_localization?` is not used: it falls back to the default locale and answers `true` for any language.
 
 ## Development
 

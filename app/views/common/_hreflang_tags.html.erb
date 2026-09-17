@@ -1,0 +1,22 @@
+<%# B1: overrides core app/views/common/_hreflang_tags.html.erb (core c124ff3e). %>
+<%# A topic page declares only its translated languages (TerrytrillaSeo::Hreflang). %>
+<%# Every other page — and the whole forum while the plugin is off — renders core's markup, %>
+<%# copied below unchanged. On a core upgrade compare it with core's file (README). %>
+<% if ContentLocalization.crawler_locale_param_enabled? %>
+  <% hreflang_topic = controller.is_a?(TopicsController) && controller.action_name == "show" ? @topic_view&.topic : nil %>
+  <% if hreflang_topic && TerrytrillaSeo::Hreflang.active? %>
+    <% TerrytrillaSeo::Hreflang.links(hreflang_topic, "#{Discourse.base_url}#{request.path}").each do |hreflang, href| %>
+      <link rel="alternate" href="<%= href %>" hreflang="<%= hreflang %>" />
+    <% end %>
+  <% else %>
+    <% locales = SiteSetting.content_localization_supported_locales&.split('|') || [] %>
+    <% if locales.any? %>
+      <% current_path = request.path %>
+      <% canonical_url = "#{Discourse.base_url}#{current_path}" %>
+      <link rel="alternate" href="<%= canonical_url %>" hreflang="x-default" />
+      <% locales.each do |locale| %>
+        <link rel="alternate" href="<%= canonical_url %>?<%= Discourse::LOCALE_PARAM %>=<%= locale %>" hreflang="<%= locale.tr('_', '-') %>" />
+      <% end %>
+    <% end %>
+  <% end %>
+<% end %>
