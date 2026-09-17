@@ -56,6 +56,10 @@ module ::TerrytrillaSeo
       return nil if wanted.nil? || wanted == topic.read_attribute(:slug)
       old = topic.read_attribute(:slug)
       topic.update_column(:slug, wanted)
+      # ⚠️ Карта сайта кешируется на 24 часа, и адрес в ней остаётся старым: шлюз
+      # запуска 17.09 нашёл в карте `/t/topic/15` через час после того, как тема
+      # получила английский адрес. Сброс здесь — там же, где адрес меняется.
+      SitemapTopics.flush_cache
       [old, wanted]
     end
 

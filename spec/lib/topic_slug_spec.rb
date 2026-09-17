@@ -89,6 +89,20 @@ RSpec.describe TerrytrillaSeo::TopicSlug do
       expect(described_class.recompute_all!).to eq([])
     end
 
+    # The sitemap kept `/t/topic/15` for an hour after the topic got its English URL.
+    it "drops the sitemap cache when a slug moves" do
+      topic = Fabricate(:topic, title: "Синкопа в аккомпанементе")
+      translate(topic, "Syncopation in the accompaniment")
+      topic.update_column(:slug, "topic")
+      Sitemap.touch("1")
+      key = "sitemap/1/#{SiteSetting.sitemap_page_size}"
+      Discourse.cache.write(key, "старая карта")
+
+      described_class.recompute_all!
+
+      expect(Discourse.cache.read(key)).to be_nil
+    end
+
     # 17.09 on production: t/2 and t/6 lost their transliterated slugs to `topic`.
     it "leaves a topic without an English title as it is" do
       topic = Fabricate(:topic, title: "Описание категории Персонал")

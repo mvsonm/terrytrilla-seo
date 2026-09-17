@@ -19,6 +19,12 @@ module ::TerrytrillaSeo
   # ⚠️ Pages are cached for 24 hours in Redis and survive a rebuild: after rollout delete
   # `sitemap/*` (OPERATIONS.md).
   module SitemapTopics
+    # Страницы карты живут в кеше 24 часа. Сбрасывается при смене адреса темы
+    # (B8) и после выката (`apply-seo-plugin.rb`).
+    def self.flush_cache
+      Sitemap.all.each { |s| Discourse.cache.delete("sitemap/#{s.name}/#{s.max_page_size}") }
+    end
+
     LASTMOD_SQL = <<~SQL.squish
       GREATEST(
         topics.last_posted_at,
