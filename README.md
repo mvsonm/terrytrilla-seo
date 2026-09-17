@@ -41,6 +41,7 @@ against this list.
 | `plugin.rb` | modifier `redirect_to_correct_topic_additional_query_parameters` + `:tl` | B8: the 301 from an old topic URL kept dropping the language |
 | `plugin.rb` | `TopicsController.after_action(only: :show)` — `X-Robots-Tag: noindex` | B3: non-indexable topics; skipped while `allow_index_in_robots_txt` is off, otherwise it would weaken core’s `noindex, nofollow` |
 | `plugin.rb` | `register_html_builder` `server:before-head-close` and `-crawler` — meta robots | B3: the same rule in both layouts |
+| `lib/terrytrilla_seo/crawler_locale.rb` | `Discourse.singleton_class.prepend` — `anonymous_locale` | B12: a crawler without `?tl` gets the default language, Accept-Language ignored; the anonymous cache key uses the same method |
 
 ## Indexing rule (B3)
 

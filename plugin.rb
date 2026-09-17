@@ -15,6 +15,7 @@ end
 
 require_relative "lib/terrytrilla_seo/topic_slug"
 require_relative "lib/terrytrilla_seo/indexing"
+require_relative "lib/terrytrilla_seo/crawler_locale"
 
 after_initialize do
   # Every change to core behaviour is listed in README.md («Core touch points»),
@@ -58,4 +59,7 @@ after_initialize do
       TerrytrillaSeo::Indexing.noindex_for?(topic) ? '<meta name="robots" content="noindex">' : ""
     end
   end
+
+  # ── B12: crawler language on a URL without ?tl ─────────────────────────────
+  Discourse.singleton_class.prepend(TerrytrillaSeo::CrawlerLocale)
 end
