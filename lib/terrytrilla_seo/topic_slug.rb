@@ -54,10 +54,13 @@ module ::TerrytrillaSeo
     end
 
     def self.recompute_all!
-      Topic.where(archetype: Archetype.default).find_each.filter_map do |topic|
-        changed = recompute!(topic)
-        changed && [topic.id, *changed]
-      end
+      Topic
+        .where(archetype: Archetype.default)
+        .find_each
+        .filter_map do |topic|
+          changed = recompute!(topic)
+          changed && [topic.id, *changed]
+        end
     end
   end
 end
