@@ -17,6 +17,15 @@ What it will do (tasks B1–B13 of the forum launch plan):
 
 The plugin is **off by default** (`terrytrilla_seo_enabled`).
 
+Settings:
+
+| setting | default | meaning |
+|---|---|---|
+| `terrytrilla_seo_enabled` | false | the whole layer |
+| `terrytrilla_seo_freeze_slugs` | false | never change topic URLs again — turn on when the forum opens to search |
+
+One-off task after installing: `bin/rake terrytrilla_seo:recompute_slugs`.
+
 ## Core touch points
 
 Every place where the plugin changes Discourse core behaviour (`prepend`, `register_*`,
@@ -25,7 +34,9 @@ against this list.
 
 | file | what | why |
 |---|---|---|
-| — | none yet | skeleton |
+| `plugin.rb` | `Topic.slug_computed_callbacks` | B8: slug of a non-Latin title from its English translation |
+| `plugin.rb` | `add_model_callback(TopicLocalization, :after_commit)` | B8: the English translation appears after the topic; core has no event for it |
+| `plugin.rb` | modifier `redirect_to_correct_topic_additional_query_parameters` + `:tl` | B8: the 301 from an old topic URL kept dropping the language |
 
 ## Development
 
