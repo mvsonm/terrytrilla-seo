@@ -29,6 +29,12 @@ against this list.
 
 ## Development
 
+> ⚠️ `required_version` is `2026.9.0-latest`, not `2026.9.0`: production reports
+> `2026.9.0-latest`, which version comparison treats as a pre-release of 2026.9.0 —
+> with `2026.9.0` the plugin silently does not activate ("discourse does not meet
+> required version").
+
+
 The plugin is developed against a local Discourse of **the same version as production**
 (`2026.9.0-latest`, core commit `c124ff3e49fd3810cc7453cb714571e48a3d7744`), never on the
 live forum. CI runs lint and specs on `discourse/discourse_test` with the same core commit.

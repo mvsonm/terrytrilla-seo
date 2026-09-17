@@ -5,7 +5,7 @@
 # version: 0.1.0
 # authors: TerryTrilla
 # url: https://github.com/mvsonm/terrytrilla-seo
-# required_version: 2026.9.0
+# required_version: 2026.9.0-latest
 
 enabled_site_setting :terrytrilla_seo_enabled
 
