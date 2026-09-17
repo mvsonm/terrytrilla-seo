@@ -64,5 +64,16 @@ module ::TerrytrillaSeo
     def self.noindex_for?(topic)
       SiteSetting.terrytrilla_seo_enabled && !indexable?(topic)
     end
+
+    # B6: what the robots directive of a topic page says. An indexable page asks for a
+    # large image and a full snippet — without them there is no large picture in Discover.
+    # ⚠️ Never `nosnippet` or `max-snippet:0`: that also switches off AI Overviews.
+    INDEXABLE_ROBOTS = "max-image-preview:large, max-snippet:-1"
+
+    def self.robots_content(topic)
+      return nil unless SiteSetting.terrytrilla_seo_enabled
+      return nil if topic.nil?
+      indexable?(topic) ? INDEXABLE_ROBOTS : "noindex"
+    end
   end
 end

@@ -48,19 +48,21 @@ after_initialize do
   # forum to plain "noindex" (caught by a spec). So on a closed forum: leave it to core.
   TopicsController.after_action(only: :show) do
     next unless SiteSetting.allow_index_in_robots_txt
-    topic = @topic_view&.topic
-    next unless TerrytrillaSeo::Indexing.noindex_for?(topic)
+    content = TerrytrillaSeo::Indexing.robots_content(@topic_view&.topic)
+    next if content.nil?
     current = response.headers["X-Robots-Tag"].to_s
     next if current.include?("noindex")
-    response.headers["X-Robots-Tag"] = current.present? ? "noindex, #{current}" : "noindex"
+    response.headers["X-Robots-Tag"] = current.present? ? "#{content}, #{current}" : content
   end
 
   # Meta tag in both layouts: people (application) and crawlers (crawler layout).
+  # B6 lives here too: the same rule says `noindex` or `max-image-preview:large`.
   %w[server:before-head-close server:before-head-close-crawler].each do |outlet|
     register_html_builder(outlet) do |controller|
       next "" unless controller.is_a?(TopicsController) && controller.action_name == "show"
       topic = controller.instance_variable_get(:@topic_view)&.topic
-      TerrytrillaSeo::Indexing.noindex_for?(topic) ? '<meta name="robots" content="noindex">' : ""
+      content = TerrytrillaSeo::Indexing.robots_content(topic)
+      content ? %(<meta name="robots" content="#{content}">) : ""
     end
   end
 

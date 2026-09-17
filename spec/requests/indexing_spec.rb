@@ -91,6 +91,20 @@ RSpec.describe TerrytrillaSeo::Indexing do
     expect(meta).to eq(false)
   end
 
+  # B6: the same rule also says what an indexable page asks for.
+  it "asks for a large image and a full snippet on an indexable page" do
+    get "/t/#{article.slug}/#{article.id}"
+    content = "max-image-preview:large, max-snippet:-1"
+    expect(response.headers["X-Robots-Tag"]).to eq(content)
+    expect(response.body).to include(%(<meta name="robots" content="#{content}">))
+  end
+
+  it "never asks for a large image on a page it keeps out of the index" do
+    get "/t/#{question.slug}/#{question.id}"
+    expect(response.headers["X-Robots-Tag"]).to eq("noindex")
+    expect(response.body).not_to include("max-image-preview")
+  end
+
   it "keeps core's stronger noindex, nofollow on a closed forum" do
     SiteSetting.allow_index_in_robots_txt = false
     get "/t/#{question.slug}/#{question.id}"
