@@ -23,6 +23,8 @@ Settings:
 |---|---|---|
 | `terrytrilla_seo_enabled` | false | the whole layer |
 | `terrytrilla_seo_freeze_slugs` | false | never change topic URLs again — turn on when the forum opens to search |
+| `terrytrilla_seo_indexable_categories` | — | the ONLY categories whose topics may be indexed |
+| `terrytrilla_seo_knowledge_base_categories` | — | articles indexable without replies (must also be in the list above) |
 
 One-off task after installing: `bin/rake terrytrilla_seo:recompute_slugs`.
 
@@ -37,6 +39,12 @@ against this list.
 | `plugin.rb` | `Topic.slug_computed_callbacks` | B8: slug of a non-Latin title from its English translation |
 | `plugin.rb` | `add_model_callback(TopicLocalization, :after_commit)` | B8: the English translation appears after the topic; core has no event for it |
 | `plugin.rb` | modifier `redirect_to_correct_topic_additional_query_parameters` + `:tl` | B8: the 301 from an old topic URL kept dropping the language |
+| `plugin.rb` | `TopicsController.after_action(only: :show)` — `X-Robots-Tag: noindex` | B3: non-indexable topics; skipped while `allow_index_in_robots_txt` is off, otherwise it would weaken core’s `noindex, nofollow` |
+| `plugin.rb` | `register_html_builder` `server:before-head-close` and `-crawler` — meta robots | B3: the same rule in both layouts |
+
+## Indexing rule (B3)
+
+`TerrytrillaSeo::Indexing.indexable?(topic)` — one method for every task that needs it (hreflang, meta robots, sitemap, home page). A topic is indexable when it is a regular visible topic, its category is public and in the explicit list, it is not a category description, and it is either a knowledge-base article or has at least one reply.
 
 ## Development
 

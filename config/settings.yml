@@ -5,3 +5,11 @@ plugins:
   terrytrilla_seo_freeze_slugs:
     default: false
     client: false
+  terrytrilla_seo_indexable_categories:
+    type: category_list
+    default: ""
+    client: false
+  terrytrilla_seo_knowledge_base_categories:
+    type: category_list
+    default: ""
+    client: false

@@ -14,6 +14,7 @@ module ::TerrytrillaSeo
 end
 
 require_relative "lib/terrytrilla_seo/topic_slug"
+require_relative "lib/terrytrilla_seo/indexing"
 
 after_initialize do
   # Every change to core behaviour is listed in README.md («Core touch points»),
@@ -33,5 +34,28 @@ after_initialize do
   # The 301 from an old topic URL used to drop `?tl`: /t/topic/27?tl=ja → /t/…/27.
   register_modifier(:redirect_to_correct_topic_additional_query_parameters) do |params|
     SiteSetting.terrytrilla_seo_enabled ? params + [:tl] : params
+  end
+
+  # ── B3: what goes into search indexes ───────────────────────────────────────
+  # Header. ⚠️ While the forum is closed (allow_index_in_robots_txt = false) core sets
+  # "noindex, nofollow" on every page — but only if the header is still empty, and this
+  # callback runs BEFORE core's. Writing "noindex" here would silently weaken the closed
+  # forum to plain "noindex" (caught by a spec). So on a closed forum: leave it to core.
+  TopicsController.after_action(only: :show) do
+    next unless SiteSetting.allow_index_in_robots_txt
+    topic = @topic_view&.topic
+    next unless TerrytrillaSeo::Indexing.noindex_for?(topic)
+    current = response.headers["X-Robots-Tag"].to_s
+    next if current.include?("noindex")
+    response.headers["X-Robots-Tag"] = current.present? ? "noindex, #{current}" : "noindex"
+  end
+
+  # Meta tag in both layouts: people (application) and crawlers (crawler layout).
+  %w[server:before-head-close server:before-head-close-crawler].each do |outlet|
+    register_html_builder(outlet) do |controller|
+      next "" unless controller.is_a?(TopicsController) && controller.action_name == "show"
+      topic = controller.instance_variable_get(:@topic_view)&.topic
+      TerrytrillaSeo::Indexing.noindex_for?(topic) ? '<meta name="robots" content="noindex">' : ""
+    end
   end
 end
