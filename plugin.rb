@@ -22,6 +22,7 @@ require_relative "lib/terrytrilla_seo/sitemap_topics"
 require_relative "lib/terrytrilla_seo/topic_meta"
 require_relative "lib/terrytrilla_seo/article_schema"
 require_relative "lib/terrytrilla_seo/home_page"
+require_relative "lib/terrytrilla_seo/ai_crawlers"
 
 after_initialize do
   # Every change to core behaviour is listed in README.md («Core touch points»),

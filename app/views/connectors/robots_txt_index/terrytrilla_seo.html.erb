@@ -1,0 +1,11 @@
+<%# B9: правила ИИ-краулеров (Р-9). Ядро умеет писать только Disallow, поэтому Allow идёт здесь. %>
+<% TerrytrillaSeo::AiCrawlers.groups.each do |agent, allow, disallow| %>
+User-agent: <%= agent %>
+<% allow.each do |path| %>
+Allow: <%= path %>
+<% end %>
+<% disallow.each do |path| %>
+Disallow: <%= path %>
+<% end %>
+
+<% end %>
