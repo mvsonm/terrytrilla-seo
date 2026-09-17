@@ -37,6 +37,8 @@ RSpec.describe TerrytrillaSeo::HomePage do
     expect(doc.css("h1").map(&:text).map(&:strip)).to eq(["TerryTrilla Community"])
     expect(doc.css("p").map(&:text)).to include("Harmony, scales and chords")
     expect(doc.css("table.category-list a").map(&:text).map(&:strip)).to include("Questions")
+    # core prints its own description in the header — ours must replace it, not double it
+    expect(doc.css("p").map(&:text).count("Harmony, scales and chords")).to eq(1)
   end
 
   it "says it in the language of the request" do
@@ -56,7 +58,9 @@ RSpec.describe TerrytrillaSeo::HomePage do
   end
 
   it "adds nothing to the category list at its own address" do
-    expect(home("/categories").css("h1")).to be_empty
+    doc = home("/categories")
+    expect(doc.css("h1")).to be_empty
+    expect(doc.css("header p")).to be_empty
   end
 
   it "leaves core's view alone when the plugin is disabled (control)" do
@@ -65,8 +69,9 @@ RSpec.describe TerrytrillaSeo::HomePage do
   end
 
   it "carries core's view unchanged, so a core upgrade cannot drift silently" do
-    core = Rails.root.join("app/views/categories/index.html.erb").read
-    ours = File.read(File.expand_path("../../../app/views/categories/index.html.erb", __FILE__))
+    core = Rails.root.join("app/views/layouts/_noscript_header.html.erb").read
+    ours =
+      File.read(File.expand_path("../../../app/views/layouts/_noscript_header.html.erb", __FILE__))
     expect(core.lines.map(&:strip).reject(&:empty?) - ours.lines.map(&:strip)).to eq([])
   end
 end

@@ -1,0 +1,19 @@
+<%# B13: overrides core app/views/layouts/_noscript_header.html.erb (core c124ff3e). %>
+<%# The crawler home page is the category list, and core gives it no H1, while the %>
+<%# description in this header is always in the default language. So on that page the %>
+<%# community name becomes the H1 and the description is taken in the language of the %>
+<%# request. Core's markup is below unchanged — compare it with core's file on upgrades. %>
+<% if is_crawler_homepage? && TerrytrillaSeo::HomePage.active?(request) %>
+  <% tt_heading = TerrytrillaSeo::HomePage.heading(I18n.locale) %>
+  <header>
+    <h1><a href="<%= path "/" %>"><%= tt_heading[:title] %></a></h1>
+    <p><%= tt_heading[:description] %></p>
+  </header>
+<% else %>
+<header>
+  <a href="<%= path "/" %>"><%=SiteSetting.title%></a>
+  <% if is_crawler_homepage? %>
+    <p><%= SiteSetting.site_description %></p>
+  <% end %>
+</header>
+<% end %>
