@@ -1,0 +1,4 @@
+plugins:
+  terrytrilla_seo_enabled:
+    default: false
+    client: false
