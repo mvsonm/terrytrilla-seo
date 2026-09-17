@@ -25,6 +25,7 @@ Settings:
 | `terrytrilla_seo_freeze_slugs` | false | never change topic URLs again — turn on when the forum opens to search |
 | `terrytrilla_seo_indexable_categories` | — | the ONLY categories whose topics may be indexed |
 | `terrytrilla_seo_knowledge_base_categories` | — | articles indexable without replies (must also be in the list above) |
+| `terrytrilla_seo_organization_url` | `https://terrytrilla.com` | author and publisher of knowledge-base articles in structured data |
 | `terrytrilla_seo_og_card_base` | `https://terrytrilla.com/api/og/forum` | link-card generator of the site; empty — topics keep the forum card |
 | `terrytrilla_seo_hreflang_excluded_locales` | — | languages removed from hreflang by hand; the original language of a topic is always declared |
 
@@ -46,6 +47,7 @@ against this list.
 | `app/views/common/_hreflang_tags.html.erb` + `prepend_view_path` in `plugin.rb` | overrides core’s partial of the same name (crawler layout) | B1: a topic page declares only translated languages; every other page renders core’s markup, **copied into the partial — compare it with core’s file on every upgrade** |
 | `plugin.rb` | `ApplicationController.prepend_before_action` — 301 | B2: for a crawler `?tl=en` → URL without `tl` (other parameters kept), `?tl=pl` → `?tl=pl_PL`; people never redirected; AnonymousCache and CrawlerHooks handle only 200, so nothing intercepts it |
 | `lib/terrytrilla_seo/topic_meta.rb` | `ApplicationHelper.prepend` — `crawlable_meta_data` on a topic page | B4: the site card per topic and language with size, type and alt, `og:url` = canonical; B5: `og:type=article`, `og:locale`, `article:modified_time` |
+| `lib/terrytrilla_seo/article_schema.rb` + `plugin.rb` | modifier `topic_crawler_container_schema`, JSON-LD in `server:before-head-close-crawler` | B7: a knowledge-base article is `Article` (last word over `discourse-solved`), author and publisher — the project |
 | `lib/terrytrilla_seo/sitemap_topics.rb` | `Sitemap.prepend` — private `sitemap_topics` (relation, filtered by `Indexing.indexable_scope`) and `topics` (lastmod column) | B10: only indexable topics in the sitemap; lastmod = latest reply or revision of the first post. ⚠️ Sitemap pages are cached 24 h and survive a rebuild — delete `sitemap/*` after rollout |
 | `lib/terrytrilla_seo/crawler_locale.rb` | `Discourse.singleton_class.prepend` — `anonymous_locale` | B12: a crawler without `?tl` gets the default language, Accept-Language ignored; the anonymous cache key uses the same method |
 

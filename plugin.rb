@@ -20,6 +20,7 @@ require_relative "lib/terrytrilla_seo/hreflang"
 require_relative "lib/terrytrilla_seo/crawler_locale_redirect"
 require_relative "lib/terrytrilla_seo/sitemap_topics"
 require_relative "lib/terrytrilla_seo/topic_meta"
+require_relative "lib/terrytrilla_seo/article_schema"
 
 after_initialize do
   # Every change to core behaviour is listed in README.md («Core touch points»),
@@ -82,6 +83,24 @@ after_initialize do
 
   # ── B4, B5: link card and Open Graph of a topic page ───────────────────────
   ApplicationHelper.prepend(TerrytrillaSeo::TopicMeta::Helper)
+
+  # ── B7: a knowledge-base article is an Article ─────────────────────────────
+  register_modifier(:topic_crawler_container_schema) do |schema, topic|
+    TerrytrillaSeo::ArticleSchema.container_schema(topic) || schema
+  end
+
+  register_html_builder("server:before-head-close-crawler") do |controller|
+    topic_view = controller.instance_variable_get(:@topic_view)
+    topic = topic_view&.topic
+    next "" unless topic
+    title = topic_view.title
+    url = controller.instance_variable_get(:@canonical_url).presence || topic.url
+    image =
+      topic_view.image_url.presence || TerrytrillaSeo::TopicMeta.card_url(topic, I18n.locale, title)
+    data = TerrytrillaSeo::ArticleSchema.json_ld(topic, title: title, url: url, image: image)
+    next "" unless data
+    %(<script type="application/ld+json">#{MultiJson.dump(data)}</script>)
+  end
 
   # ── B1: hreflang only for translated languages ─────────────────────────────
   # Overrides core's common/_hreflang_tags partial (crawler layout). The view path is
