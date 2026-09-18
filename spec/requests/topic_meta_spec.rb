@@ -227,6 +227,33 @@ RSpec.describe TerrytrillaSeo::TopicMeta do
       m = карточка_человеку("de")
       expect(m["og:title"]).to eq(topic.title)
     end
+
+    # Замер владельца 18.09: og:* по-русски, а заголовок вкладки и name=description
+    # по-английски. Карточку переводил плагин, а заголовок страницы ядро строит из
+    # topic.title без перевода.
+    def страница_человеку(язык)
+      get path, headers: { "User-Agent" => человек, "Accept-Language" => язык }
+      expect(response.status).to eq(200)
+      Nokogiri.HTML5(response.body)
+    end
+
+    it "заголовок вкладки и описание — на языке страницы, не только og" do
+      doc = страница_человеку("de")
+      expect(doc.css("title").text).to include("Moll-Akkorde und die Dominante")
+      expect(doc.css("title").text).not_to include(topic.title)
+      описание = doc.css('meta[name="description"]').first&.[]("content")
+      expect(описание).to include("fünfte Stufe")
+    end
+
+    it "раздел и имя сообщества в заголовке остаются от ядра" do
+      doc = страница_человеку("de")
+      expect(doc.css("title").text).to include(SiteSetting.title)
+    end
+
+    it "без перевода заголовок вкладки не трогает (контроль)" do
+      doc = страница_человеку("pt-BR")
+      expect(doc.css("title").text).to include(topic.title)
+    end
   end
 
   # B4-бис: у статей базы знаний первая картинка поста — квадратный скриншот Круга

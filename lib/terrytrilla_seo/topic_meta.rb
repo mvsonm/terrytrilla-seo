@@ -144,7 +144,54 @@ module ::TerrytrillaSeo
       opts
     end
 
+    # Тема страницы и её описание на языке читателя.
+    #
+    # ⚠️ Замер владельца 18.09: у статьи базы знаний `og:title` и `og:description`
+    # по-русски, а `<title>` вкладки и `<meta name="description">` — по-английски.
+    # Причина в том, что `og:*` переводит этот плагин (B5-бис), а заголовок страницы
+    # ядро берёт из `TopicView#page_title`, то есть из `topic.title` без перевода:
+    # переводы оно применяет только в краулерной раскладке.
+    #
+    # Заголовок страницы — это не только заголовок темы: к нему приклеены раздел и
+    # имя сообщества («Статья - База знаний - TerryTrilla Community»). Поэтому мы не
+    # собираем строку заново, а заменяем в ней ровно заголовок темы: остальное
+    # остаётся тем, что построило ядро, включая номер поста и имя отвечавшего.
+    def self.заголовок_на_языке_страницы(строка, topic_view, guardian)
+      return строка if строка.blank?
+      оригинал = topic_view.topic.title.to_s
+      return строка if оригинал.blank?
+      перевод = ContentLocalization.translated_topic_title(topic_view.topic, guardian)
+      return строка if перевод.blank? || перевод == оригинал
+      строка.sub(оригинал, перевод)
+    end
+
+    def self.описание_на_языке_страницы(topic_view, guardian)
+      пост = topic_view.desired_post
+      cooked = пост && ContentLocalization.translated_post_cooked(пост, guardian)
+      return if cooked.blank?
+      описание =
+        Post.excerpt(cooked, 300, strip_links: true, text_entities: true, strip_images: true, post: пост)
+      описание.presence && описание.to_s.tr("\n", " ").strip
+    end
+
     module Helper
+      def на_теме_студии?
+        instance_variable_get(:@topic_view) && controller.is_a?(TopicsController) &&
+          controller.action_name == "show"
+      end
+
+      def title_content
+        строка = super
+        return строка unless SiteSetting.terrytrilla_seo_enabled && на_теме_студии?
+        TopicMeta.заголовок_на_языке_страницы(строка, @topic_view, guardian)
+      end
+
+      def description_content
+        строка = super
+        return строка unless SiteSetting.terrytrilla_seo_enabled && на_теме_студии?
+        TopicMeta.описание_на_языке_страницы(@topic_view, guardian) || строка
+      end
+
       def crawlable_meta_data(opts = nil)
         topic_view = instance_variable_get(:@topic_view)
         на_теме =
