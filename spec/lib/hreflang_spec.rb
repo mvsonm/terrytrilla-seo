@@ -17,20 +17,24 @@ RSpec.describe TerrytrillaSeo::Hreflang do
     let(:canonical) { "https://forum.example.com/t/article/51" }
 
     it "takes the canonical address, not the requested one" do
-      expect(described_class.canonical_base(canonical, requested)).to eq(canonical)
+      base = described_class.canonical_base(canonical, requested)
+
+      expect(base).to eq(canonical)
     end
 
     it "drops the language parameter: it comes back per language below" do
-      expect(described_class.canonical_base("#{canonical}?tl=ru", requested)).to eq(canonical)
+      base = described_class.canonical_base("#{canonical}?tl=ru", requested)
+
+      expect(base).to eq(canonical)
     end
 
     it "keeps the other parameters: page two stays page two" do
-      expect(described_class.canonical_base("#{canonical}?page=2&tl=ru", requested)).to eq(
-        "#{canonical}?page=2",
-      )
+      base = described_class.canonical_base("#{canonical}?page=2&tl=ru", requested)
+
+      expect(base).to eq("#{canonical}?page=2")
     end
 
-    it "falls back to the requested address when there is no canonical (control)" do
+    it "falls back to the requested address without a canonical (control)" do
       expect(described_class.canonical_base(nil, requested)).to eq(requested)
       expect(described_class.canonical_base("", requested)).to eq(requested)
     end
@@ -45,16 +49,20 @@ RSpec.describe TerrytrillaSeo::Hreflang do
     end
 
     it "joins the language with & when the address already has parameters" do
-      links = described_class.links(topic, "https://forum.example.com/t/article/51?page=2")
+      page_two = "https://forum.example.com/t/article/51?page=2"
 
-      expect(links).to include(["x-default", "https://forum.example.com/t/article/51?page=2"])
-      expect(links).to include(["en", "https://forum.example.com/t/article/51?page=2&tl=en"])
+      links = described_class.links(topic, page_two)
+
+      expect(links).to include(["x-default", page_two])
+      expect(links).to include(["en", "#{page_two}&tl=en"])
     end
 
     it "joins the language with ? when the address has none (control)" do
-      links = described_class.links(topic, "https://forum.example.com/t/article/51")
+      plain = "https://forum.example.com/t/article/51"
 
-      expect(links).to include(["en", "https://forum.example.com/t/article/51?tl=en"])
+      links = described_class.links(topic, plain)
+
+      expect(links).to include(["en", "#{plain}?tl=en"])
     end
   end
 end
