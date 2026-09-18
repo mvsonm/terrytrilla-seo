@@ -73,15 +73,44 @@ module ::TerrytrillaSeo
       end
     end
 
-    # [[hreflang, href], …] for a topic page. `url` is the address without query.
+    # B1-бис (замер 18.09). Основа альтернатив — canonical страницы, а не адрес запроса.
+    #
+    # У темы не один адрес: кроме `/t/тема/51` есть `/t/тема/51/1` — ссылка на первый
+    # пост, её отдаёт кнопка «Поделиться». Ядро ставит там canonical на `/51`, а
+    # альтернативы строились из `request.path` и объявляли `/51/1?tl=ru`. Адрес, на
+    # который указывает hreflang, поисковик сначала приводит к его canonical, и вся
+    # группа языков схлопывается на один адрес: взаимность (Е2) теряется, пара
+    # отбрасывается целиком — страница остаётся без объявленных языков.
+    #
+    # `tl` из canonical срезается — ниже он приезжает обратно для каждого языка
+    # отдельно (у `?tl=ru` canonical самоканоничен и несёт этот параметр). Остальные
+    # параметры остаются: у второй страницы длинной темы (`?page=2`) языковая пара —
+    # тоже вторая страница.
+    def self.canonical_base(canonical, fallback)
+      return fallback if canonical.blank?
+
+      address, _, query = canonical.to_s.partition("?")
+      return address if query.blank?
+
+      kept = query.split("&").reject { |pair| pair.start_with?("#{Discourse::LOCALE_PARAM}=") }
+      kept.empty? ? address : "#{address}?#{kept.join("&")}"
+    end
+
+    # [[hreflang, href], …] for a topic page. `url` is the canonical address of the page.
     # A topic that is not indexable (B3) gets no hreflang at all.
     def self.links(topic, url)
       return [] if Indexing.noindex_for?(topic)
 
       default = base(SiteSetting.default_locale)
+      separator = url.include?("?") ? "&" : "?"
       links = [["x-default", url]]
       locales_for(topic).each do |locale|
-        href = base(locale) == default ? url : "#{url}?#{Discourse::LOCALE_PARAM}=#{locale}"
+        href =
+          if base(locale) == default
+            url
+          else
+            "#{url}#{separator}#{Discourse::LOCALE_PARAM}=#{locale}"
+          end
         links << [locale.tr("_", "-"), href]
       end
       links

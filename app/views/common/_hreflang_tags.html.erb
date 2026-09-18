@@ -5,7 +5,10 @@
 <% if ContentLocalization.crawler_locale_param_enabled? %>
   <% hreflang_topic = controller.is_a?(TopicsController) && controller.action_name == "show" ? @topic_view&.topic : nil %>
   <% if hreflang_topic && TerrytrillaSeo::Hreflang.active? %>
-    <% TerrytrillaSeo::Hreflang.links(hreflang_topic, "#{Discourse.base_url}#{request.path}").each do |hreflang, href| %>
+    <%# B1-бис: основа альтернатив — canonical страницы. У адреса с номером поста
+        (/t/тема/51/1) canonical ведёт на /51, и альтернативы обязаны вести туда же. %>
+    <% hreflang_base = TerrytrillaSeo::Hreflang.canonical_base(@canonical_url, "#{Discourse.base_url}#{request.path}") %>
+    <% TerrytrillaSeo::Hreflang.links(hreflang_topic, hreflang_base).each do |hreflang, href| %>
       <link rel="alternate" href="<%= href %>" hreflang="<%= hreflang %>" />
     <% end %>
   <% else %>
