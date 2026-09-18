@@ -98,6 +98,13 @@ RSpec.describe TerrytrillaSeo::TopicMeta do
       Nokogiri.HTML5(response.body).css("meta[property]").to_h { |t| [t["property"], t["content"]] }
     end
 
+    it "оставляет карточку большой — её показывает Telegram" do
+      get "/", headers: { "User-Agent" => bot }
+      m = Nokogiri.HTML5(response.body).css("meta[name]").to_h { |t| [t["name"], t["content"]] }
+      expect(m["twitter:card"]).to eq("summary_large_image")
+      expect(m["twitter:image"]).to include(brand.url)
+    end
+
     it "объявляет размеры брендовой картинки на главной" do
       m = карточка("/")
       expect(m["og:image"]).to include(brand.url)

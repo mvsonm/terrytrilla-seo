@@ -74,6 +74,12 @@ module ::TerrytrillaSeo
       return opts unless upload.respond_to?(:width) && upload.width.to_i.positive?
 
       opts[:image] = UrlHelper.absolute(upload.url)
+      # ⚠️ `x_summary_large_image` обязателен ВМЕСТЕ с `image`. Ядро ставит его само,
+      # но только когда картинку подставляет тоже само (application_helper.rb:
+      # `if opts[:image].blank?`). Стоило подставить картинку раньше — и
+      # `twitter:card` стал `summary`: карточка главной в Telegram сжалась в иконку
+      # (замер владельца 18.09). Размеры добавились, а карточка испортилась.
+      opts[:x_summary_large_image] = opts[:image]
       opts[:image_width] = upload.width
       opts[:image_height] = upload.height
       type = MiniMime.lookup_by_extension(upload.extension.to_s)&.content_type
