@@ -281,6 +281,25 @@ RSpec.describe TerrytrillaSeo::TopicMeta do
       expect(правило.call(858, 1277)).to eq(false)
       expect(правило.call(400, 210)).to eq(false)
       expect(правило.call(nil, nil)).to eq(false)
+      # Лента шире карточки: в 1.91:1 от неё остаётся полоска (замер 18.09 — полоса
+      # ячеек статьи «Как заменить аккорд руками»).
+      expect(правило.call(2124, 246)).to eq(false)
+      expect(правило.call(992, 371)).to eq(false)
+      # А близкое к 1.91 с обеих сторон годится.
+      expect(правило.call(1200, 724)).to eq(true)
+      expect(правило.call(3480, 2100)).to eq(true)
+    end
+
+    it "ленту шире карточки не берёт, рисует карточку сайта" do
+      upload = Fabricate(:image_upload, width: 2124, height: 246)
+      Fabricate(:post, topic: topic, raw: "![полоса ячеек](#{upload.url})")
+      topic.update_columns(image_upload_id: upload.id)
+
+      _, m = meta(path)
+      expect(m["og:image"]).to start_with(base)
+      expect(m["og:image"]).not_to include(upload.url)
+      expect(m["og:image:width"]).to eq("1200")
+      expect(m["og:image:height"]).to eq("630")
     end
   end
 end
