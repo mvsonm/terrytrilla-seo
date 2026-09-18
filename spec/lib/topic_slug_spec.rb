@@ -89,6 +89,18 @@ RSpec.describe TerrytrillaSeo::TopicSlug do
       expect(described_class.recompute_all!).to eq([])
     end
 
+    # 18.09: индекс карты сайта показывал 16.09, хотя темы сменили адрес 17.09 —
+    # дата индекса считается как максимум updated_at, а update_column её не двигает.
+    it "двигает дату изменения темы: смена адреса — это изменение страницы" do
+      topic = Fabricate(:topic, title: "Синкопа в аккомпанементе")
+      translate(topic, "Syncopation in the accompaniment")
+      topic.update_columns(slug: "topic", updated_at: 3.days.ago)
+
+      described_class.recompute_all!
+
+      expect(topic.reload.updated_at).to be_within(1.minute).of(Time.zone.now)
+    end
+
     # The sitemap kept `/t/topic/15` for an hour after the topic got its English URL.
     it "drops the sitemap cache when a slug moves" do
       topic = Fabricate(:topic, title: "Синкопа в аккомпанементе")

@@ -55,7 +55,15 @@ module ::TerrytrillaSeo
       wanted = english_slug(topic)
       return nil if wanted.nil? || wanted == topic.read_attribute(:slug)
       old = topic.read_attribute(:slug)
-      topic.update_column(:slug, wanted)
+      # `update_columns`, а не `update!`: перезапись slug не должна дёргать
+      # обратные вызовы темы. Но `updated_at` двигаем явно — см. ниже.
+      #
+      # ⚠️ **Смена адреса — это изменение страницы, и дата обязана об этом
+      # сказать.** `update_column` обходит `updated_at`, и 18.09 владелец увидел
+      # в индексе карты сайта 16.09, хотя четыре темы сменили адрес 17.09: дата
+      # индекса считается как максимум `updated_at` индексируемых тем. Для
+      # поисковика это значит «ничего не менялось» — он не спешит перезайти.
+      topic.update_columns(slug: wanted, updated_at: Time.zone.now)
       # ⚠️ Карта сайта кешируется на 24 часа, и адрес в ней остаётся старым: шлюз
       # запуска 17.09 нашёл в карте `/t/topic/15` через час после того, как тема
       # получила английский адрес. Сброс здесь — там же, где адрес меняется.
