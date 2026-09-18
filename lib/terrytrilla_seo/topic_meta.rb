@@ -170,7 +170,14 @@ module ::TerrytrillaSeo
       cooked = пост && ContentLocalization.translated_post_cooked(пост, guardian)
       return if cooked.blank?
       описание =
-        Post.excerpt(cooked, 300, strip_links: true, text_entities: true, strip_images: true, post: пост)
+        Post.excerpt(
+          cooked,
+          300,
+          strip_links: true,
+          text_entities: true,
+          strip_images: true,
+          post: пост,
+        )
       описание.presence && описание.to_s.tr("\n", " ").strip
     end
 
