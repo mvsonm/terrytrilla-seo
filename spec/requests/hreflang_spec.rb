@@ -47,6 +47,20 @@ RSpec.describe TerrytrillaSeo::Hreflang do
     )
   end
 
+  # B1-бис. У темы больше одного адреса: `/t/тема/51/1` отдаёт кнопка «Поделиться».
+  # Ядро ставит там canonical на адрес БЕЗ номера — альтернативы обязаны вести туда
+  # же. Пока они вели на себя, поисковик приводил их к тому же canonical, группа
+  # языков схлопывалась на один адрес и пара отбрасывалась целиком.
+  it "points the alternates at the canonical address, not at the post address" do
+    translate(article, "de", posts: [first_post, reply])
+
+    expect(hreflangs("/t/#{article.slug}/#{article.id}/1")).to eq(
+      "x-default" => url,
+      "en" => url,
+      "de" => "#{url}?tl=de",
+    )
+  end
+
   it "does not declare a language when one post is missing its translation" do
     translate(article, "de", posts: [first_post])
     expect(hreflangs("/t/#{article.slug}/#{article.id}").keys).to eq(%w[x-default en])

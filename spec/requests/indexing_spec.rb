@@ -110,4 +110,17 @@ RSpec.describe TerrytrillaSeo::Indexing do
     get "/t/#{question.slug}/#{question.id}"
     expect(response.headers["X-Robots-Tag"]).to eq("noindex, nofollow")
   end
+
+  # B3-бис: список групп. Ядро закрывает /u, /badges и /search, а /g оставляло
+  # открытым — пустая страница с заголовком главной шла бы в индекс.
+  it "keeps the group list out of the index" do
+    get "/g"
+    expect(response.headers["X-Robots-Tag"]).to include("noindex")
+  end
+
+  it "leaves the group list to core when the plugin is disabled (control)" do
+    SiteSetting.terrytrilla_seo_enabled = false
+    get "/g"
+    expect(response.headers["X-Robots-Tag"]).to be_blank
+  end
 end
