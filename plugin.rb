@@ -72,17 +72,21 @@ after_initialize do
   end
 
   # ── B3-бис: список групп вне индекса ───────────────────────────────────────
-  # Ядро само закрывает заголовком `/u`, `/badges` и `/search`, а `/g` оставляет
-  # открытым — и в секции `Googlebot` файла robots.txt его запрета тоже нет, он
-  # есть только у `*`. Замер 18.09 агентом Googlebot: `/g` — 200 БЕЗ
-  # `X-Robots-Tag`, страница пустая (публичных групп нет), а её заголовок — имя
-  # сообщества, то есть дубль главной. Ровно то тонкое, ради чего заведён B3.
+  # Ядро закрывает заголовком `/u`, `/badges` и `/search`, а `/g` остаётся
+  # открытым: замер 18.09 агентом Googlebot — 200 БЕЗ `X-Robots-Tag`, и в секции
+  # `Googlebot` файла robots.txt запрета тоже нет, он есть только у `*`. Страница
+  # пустая (публичных групп нет), заголовок — имя сообщества, то есть дубль
+  # главной. Ровно то тонкое, ради чего заведён B3.
   #
-  # Заголовок ставится тем же методом ядра, что и на `/u`: он сам различает
-  # открытый форум (`noindex`) и закрытый (`noindex, nofollow`).
-  GroupsController.after_action(only: %i[index show]) do
-    next unless SiteSetting.terrytrilla_seo_enabled
-    add_noindex_header
+  # ⚠️ Заголовком это не чинится, хотя `after_action :add_noindex_header` у
+  # `GroupsController` в ядре СТОИТ. На `index` оболочку рисует не действие, а
+  # исключение `check_xhr`, и цепочка `after_action` при этом не исполняется —
+  # поэтому не срабатывает ни callback ядра, ни такой же от плагина (проверено
+  # спеком: заголовка нет). Мета-тег рисуется в самой оболочке и доезжает.
+  %w[server:before-head-close server:before-head-close-crawler].each do |outlet|
+    register_html_builder(outlet) do |controller|
+      controller.is_a?(GroupsController) ? %(<meta name="robots" content="noindex">) : ""
+    end
   end
 
   # ── B13-бис: карточка ссылки на главную для НЕ-краулера ────────────────────

@@ -115,12 +115,12 @@ RSpec.describe TerrytrillaSeo::Indexing do
   # открытым — пустая страница с заголовком главной шла бы в индекс.
   it "keeps the group list out of the index" do
     get "/g"
-    expect(response.headers["X-Robots-Tag"]).to include("noindex")
+    expect(response.body).to include(%(<meta name="robots" content="noindex">))
   end
 
   it "leaves the group list to core when the plugin is disabled (control)" do
     SiteSetting.terrytrilla_seo_enabled = false
     get "/g"
-    expect(response.headers["X-Robots-Tag"]).to be_blank
+    expect(response.body).not_to include("noindex")
   end
 end
