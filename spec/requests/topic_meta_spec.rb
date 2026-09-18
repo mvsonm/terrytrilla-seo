@@ -151,6 +151,84 @@ RSpec.describe TerrytrillaSeo::TopicMeta do
     end
   end
 
+  # B5-бис: страница на языке человека, а карточка — на языке оригинала.
+  # Ядро локализует содержимое темы только для краулерной раскладки, поэтому у
+  # обычного браузера (и у сканеров, которые им представляются) мета-теги оставались
+  # английскими при русском тексте на экране (замер владельца 18.09).
+  describe "B5-бис: карточка на языке страницы" do
+    let(:человек) do
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " \
+        "(KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    end
+
+    before do
+      SiteSetting.content_localization_supported_locales = "en|de|ru|pt_BR"
+      SiteSetting.set_locale_from_accept_language_header = true
+      topic.update_columns(locale: "en")
+      first_post.update_columns(locale: "en")
+      TopicLocalization.create!(
+        topic: topic,
+        locale: "de",
+        title: "Moll-Akkorde und die Dominante",
+        fancy_title: "Moll-Akkorde und die Dominante",
+        localizer_user_id: Discourse.system_user.id,
+      )
+      PostLocalization.create!(
+        post: first_post,
+        locale: "de",
+        raw: "Warum ist die fünfte Stufe in Moll ein Dur-Akkord? Hier die Erklärung.",
+        cooked: "<p>Warum ist die fünfte Stufe in Moll ein Dur-Akkord? Hier die Erklärung.</p>",
+        post_version: first_post.version,
+        localizer_user_id: Discourse.system_user.id,
+      )
+    end
+
+    def карточка_человеку(язык)
+      get path, headers: { "User-Agent" => человек, "Accept-Language" => язык }
+      expect(response.status).to eq(200)
+      Nokogiri
+        .HTML5(response.body)
+        .css("meta[property], meta[name]")
+        .to_h { |m| [m["property"] || m["name"], m["content"]] }
+    end
+
+    it "человеку с немецким браузером даёт немецкий заголовок и описание" do
+      m = карточка_человеку("de")
+      expect(m["og:title"]).to eq("Moll-Akkorde und die Dominante")
+      expect(m["og:description"]).to include("fünfte Stufe")
+      expect(m["twitter:description"]).to eq(m["og:description"])
+    end
+
+    it "подписывает карточку тем же языком, что и заголовок" do
+      m = карточка_человеку("de")
+      expect(m["og:image:alt"]).to eq("Moll-Akkorde und die Dominante")
+      expect(m["og:image"]).to include("locale=de")
+    end
+
+    it "без перевода на язык человека оставляет оригинал (контроль)" do
+      m = карточка_человеку("pt-BR")
+      expect(m["og:title"]).to eq(topic.title)
+      expect(m["og:description"]).not_to include("fünfte Stufe")
+    end
+
+    it "не трогает страницу на языке оригинала (контроль)" do
+      m = карточка_человеку("en")
+      expect(m["og:title"]).to eq(topic.title)
+    end
+
+    it "краулеру ничего не ломает: у него локализует ядро (контроль)" do
+      _, m = meta("#{path}?tl=de")
+      expect(m["og:title"]).to eq("Moll-Akkorde und die Dominante")
+      expect(m["og:locale"]).to eq("de_DE")
+    end
+
+    it "при выключенном плагине карточка остаётся как у ядра (контроль)" do
+      SiteSetting.terrytrilla_seo_enabled = false
+      m = карточка_человеку("de")
+      expect(m["og:title"]).to eq(topic.title)
+    end
+  end
+
   # B4-бис: у статей базы знаний первая картинка поста — квадратный скриншот Круга
   # ладов (826×826 на 18.09). В карточку 1.91:1 он не влезает, и клиент рисует
   # маленькое превью сбоку вместо крупной карточки.

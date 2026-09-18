@@ -59,6 +59,37 @@ module ::TerrytrillaSeo
       ширина >= МИНИМАЛЬНАЯ_ШИРИНА && (ширина.to_f / высота) >= ШИРИНА_К_ВЫСОТЕ
     end
 
+    # B5-бис (замер владельца 18.09): страница помечена `lang="ru"`, человек читает
+    # русский перевод — а карточка ссылки на той же странице английская.
+    #
+    # Ядро локализует содержимое `@topic_view` ТОЛЬКО для краулерной раскладки
+    # (`topics_controller.rb`: `if … && use_crawler_layout?`). Человеку переводы
+    # подставляет приложение уже в браузере, и мета-теги остаются от оригинала — их
+    # читают сканеры, которые представляются браузером.
+    #
+    # Спрашиваем у ядра теми же методами, которыми оно решает, показать ли человеку
+    # перевод: иначе карточка могла бы разойтись с текстом на экране.
+    def self.на_языке_страницы(opts, topic_view, guardian)
+      заголовок = ContentLocalization.translated_topic_title(topic_view.topic, guardian)
+      opts[:title] = заголовок if заголовок.present?
+
+      пост = topic_view.desired_post
+      cooked = пост && ContentLocalization.translated_post_cooked(пост, guardian)
+      if cooked.present?
+        описание =
+          Post.excerpt(
+            cooked,
+            500,
+            strip_links: true,
+            text_entities: true,
+            strip_images: true,
+            post: пост,
+          )
+        opts[:description] = описание.to_s.tr("\n", " ").strip if описание.present?
+      end
+      opts
+    end
+
     def self.card_url(topic, locale, title)
       base = SiteSetting.terrytrilla_seo_og_card_base.to_s.strip
       return if base.blank?
@@ -114,6 +145,8 @@ module ::TerrytrillaSeo
         topic = topic_view.topic
         opts = (opts || {}).dup
         opts[:url] = @canonical_url if @canonical_url.present?
+        # Язык страницы — раньше карточки: её заголовок и подпись берутся отсюда.
+        opts = TopicMeta.на_языке_страницы(opts, topic_view, guardian)
 
         card = nil
         # Своя картинка годится только широкая: узкую или квадратную клиент покажет
