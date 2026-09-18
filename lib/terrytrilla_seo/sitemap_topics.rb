@@ -23,6 +23,9 @@ module ::TerrytrillaSeo
     # (B8) и после выката (`apply-seo-plugin.rb`).
     def self.flush_cache
       Sitemap.all.each { |s| Discourse.cache.delete("sitemap/#{s.name}/#{s.max_page_size}") }
+      # У карты страниц (B10-бис) ключ кеша составлен из даты, а не из размера страницы:
+      # цикл выше его не покрывает.
+      Discourse.cache.delete(SitemapPages.cache_key)
     end
 
     LASTMOD_SQL = <<~SQL.squish

@@ -13,12 +13,14 @@ module ::TerrytrillaSeo
   PLUGIN_NAME = "terrytrilla-seo"
 end
 
+require_relative "lib/terrytrilla_seo/engine"
 require_relative "lib/terrytrilla_seo/topic_slug"
 require_relative "lib/terrytrilla_seo/indexing"
 require_relative "lib/terrytrilla_seo/crawler_locale"
 require_relative "lib/terrytrilla_seo/hreflang"
 require_relative "lib/terrytrilla_seo/crawler_locale_redirect"
 require_relative "lib/terrytrilla_seo/sitemap_topics"
+require_relative "lib/terrytrilla_seo/sitemap_pages"
 require_relative "lib/terrytrilla_seo/topic_meta"
 require_relative "lib/terrytrilla_seo/article_schema"
 require_relative "lib/terrytrilla_seo/home_page"
@@ -82,6 +84,20 @@ after_initialize do
 
   # ── B10: sitemap only from indexable topics ────────────────────────────────
   Sitemap.prepend(TerrytrillaSeo::SitemapTopics)
+
+  # ── B10-бис: главная и разделы в карте сайта ───────────────────────────────
+  # Запись в таблице `sitemaps` кладёт свою карту в индекс карт (`/sitemap.xml`) без
+  # переопределения вида, а содержимое отдаёт свой контроллер: маршрут ядра принимает
+  # только числовые имена (`:page => /[1-9][0-9]*/`), поэтому `/sitemap_pages.xml`
+  # объявляется здесь.
+  Sitemap.prepend(TerrytrillaSeo::SitemapPages::Model)
+  Sitemap.singleton_class.prepend(TerrytrillaSeo::SitemapPages::ClassMethods)
+
+  Discourse::Application.routes.append do
+    scope path: nil, format: true, constraints: { format: :xml } do
+      get "/sitemap_pages" => "terrytrilla_seo/sitemap_pages#show"
+    end
+  end
 
   # ── B4, B5: link card and Open Graph of a topic page ───────────────────────
   ApplicationHelper.prepend(TerrytrillaSeo::TopicMeta::Helper)

@@ -12,7 +12,7 @@ What it will do (tasks B1–B13 of the forum launch plan):
 - `Article` structured data for knowledge-base articles, `og:type`, `og:locale`,
   `max-image-preview:large`;
 - link-preview images per topic and language, titles in the page language;
-- a sitemap built only from indexable pages;
+- a sitemap built only from indexable pages — topics, the home page and the categories;
 - a search-engine friendly home page.
 
 The plugin is **off by default** (`terrytrilla_seo_enabled`).
@@ -51,6 +51,7 @@ against this list.
 | `app/views/connectors/robots_txt_index/` | connector appended to core’s robots.txt | B9: search and answer engines get the forum, collectors of training corpora get `Disallow: /`; core’s template can only write `Disallow`, so `Allow` lives here. Dead until G1: while `overridden_robots_txt` is set the template is not rendered |
 | `lib/terrytrilla_seo/article_schema.rb` + `plugin.rb` | modifier `topic_crawler_container_schema`, JSON-LD in `server:before-head-close-crawler` | B7: a knowledge-base article is `Article` (last word over `discourse-solved`), author and publisher — the project |
 | `lib/terrytrilla_seo/sitemap_topics.rb` | `Sitemap.prepend` — private `sitemap_topics` (relation, filtered by `Indexing.indexable_scope`) and `topics` (lastmod column) | B10: only indexable topics in the sitemap; lastmod = latest reply or revision of the first post. ⚠️ Sitemap pages are cached 24 h and survive a rebuild — delete `sitemap/*` after rollout |
+| `lib/terrytrilla_seo/sitemap_pages.rb`, `app/controllers/terrytrilla_seo/sitemap_pages_controller.rb` | `Sitemap.prepend` (`last_posted_topic`, `topics`), `Sitemap.singleton_class.prepend` (`regenerate_sitemaps`), route `/sitemap_pages.xml` appended to core routes | B10-bis: the home page and the categories in the sitemap. Core lists topics only, and its route accepts numeric sitemap names only. The record in `sitemaps` puts the map into core's index without overriding the view; `regenerate_sitemaps` must re-add the name, otherwise the nightly job disables it |
 | `lib/terrytrilla_seo/crawler_locale.rb` | `Discourse.singleton_class.prepend` — `anonymous_locale` | B12: a crawler without `?tl` gets the default language, Accept-Language ignored; the anonymous cache key uses the same method |
 
 ## Indexing rule (B3)
