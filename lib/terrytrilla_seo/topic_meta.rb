@@ -59,13 +59,35 @@ module ::TerrytrillaSeo
       helper.tag(:meta, attributes)
     end
 
+    # На страницах БЕЗ темы (главная, разделы, списки) картинку карточки даёт
+    # настройка форума, и ядро не объявляет её размеры: размеры оно берёт только
+    # у картинки темы. Клиенты мессенджеров без размеров иногда не рисуют карточку
+    # вовсе (17.09: владелец не увидел карточку главной в Telegram).
+    #
+    # Размеры берутся у самой загрузки, а не пишутся числом: заменят картинку —
+    # объявление останется правдой.
+    def self.с_размерами_бренда(opts)
+      opts = (opts || {}).dup
+      return opts if opts[:image].present?
+
+      upload = SiteSetting.opengraph_image
+      return opts unless upload.respond_to?(:width) && upload.width.to_i.positive?
+
+      opts[:image] = UrlHelper.absolute(upload.url)
+      opts[:image_width] = upload.width
+      opts[:image_height] = upload.height
+      type = MiniMime.lookup_by_extension(upload.extension.to_s)&.content_type
+      opts[:image_type] = type if type
+      opts
+    end
+
     module Helper
       def crawlable_meta_data(opts = nil)
         topic_view = instance_variable_get(:@topic_view)
-        unless SiteSetting.terrytrilla_seo_enabled && topic_view &&
-                 controller.is_a?(TopicsController) && controller.action_name == "show"
-          return super
-        end
+        на_теме =
+          topic_view && controller.is_a?(TopicsController) && controller.action_name == "show"
+        return super unless SiteSetting.terrytrilla_seo_enabled
+        return super(TopicMeta.с_размерами_бренда(opts)) unless на_теме
 
         topic = topic_view.topic
         opts = (opts || {}).dup

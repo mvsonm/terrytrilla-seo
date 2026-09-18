@@ -81,6 +81,38 @@ RSpec.describe TerrytrillaSeo::TopicMeta do
     end
   end
 
+  # 17.09: владелец не увидел карточку главной в Telegram — у картинки из настройки
+  # форума ядро не объявляет размеры.
+  describe "B4: карточка страниц без темы" do
+    fab!(:brand) { Fabricate(:image_upload, width: 1200, height: 630) }
+
+    before do
+      SiteSetting.opengraph_image = brand
+      # ⚠️ В свежей тестовой установке "/" — страница установщика, а не главная.
+      SiteSetting.has_login_hint = false
+    end
+
+    def карточка(путь)
+      get путь, headers: { "User-Agent" => bot }
+      expect(response.status).to eq(200)
+      Nokogiri.HTML5(response.body).css("meta[property]").to_h { |t| [t["property"], t["content"]] }
+    end
+
+    it "объявляет размеры брендовой картинки на главной" do
+      m = карточка("/")
+      expect(m["og:image"]).to include(brand.url)
+      expect(m["og:image:width"]).to eq("1200")
+      expect(m["og:image:height"]).to eq("630")
+      expect(m["og:image:type"]).to eq("image/png")
+    end
+
+    it "не объявляет размеров при выключенном плагине (контроль)" do
+      SiteSetting.terrytrilla_seo_enabled = false
+      get "/", headers: { "User-Agent" => bot }
+      expect(response.body).not_to include('property="og:image:width"')
+    end
+  end
+
   describe "B5: article" do
     it "marks a topic as an article in the page language" do
       _, m = meta("#{path}?tl=pt_BR")
