@@ -150,4 +150,59 @@ RSpec.describe TerrytrillaSeo::TopicMeta do
       expect(m["og:locale"]).to be_nil
     end
   end
+
+  # B4-бис: у статей базы знаний первая картинка поста — квадратный скриншот Круга
+  # ладов (826×826 на 18.09). В карточку 1.91:1 он не влезает, и клиент рисует
+  # маленькое превью сбоку вместо крупной карточки.
+  describe "B4-бис: какая картинка идёт в карточку" do
+    def тема_с_картинкой(ширина, высота)
+      upload = Fabricate(:image_upload, width: ширина, height: высота)
+      post = Fabricate(:post, topic: topic, raw: "![скрин](#{upload.url})")
+      topic.update_columns(image_upload_id: upload.id)
+      post
+    end
+
+    it "квадратную картинку темы в карточку не берёт — рисует карточку сайта" do
+      тема_с_картинкой(826, 826)
+      _, m = meta(path)
+      expect(m["og:image"]).to start_with(base)
+      expect(m["og:image:width"]).to eq("1200")
+      expect(m["og:image:height"]).to eq("630")
+      expect(m["twitter:card"]).to eq("summary_large_image")
+    end
+
+    it "вертикальную — тоже не берёт" do
+      тема_с_картинкой(858, 1277)
+      _, m = meta(path)
+      expect(m["og:image"]).to start_with(base)
+      expect(m["twitter:card"]).to eq("summary_large_image")
+    end
+
+    it "узкую по ширине — не берёт, даже если она вытянута правильно (контроль порога)" do
+      тема_с_картинкой(400, 210)
+      _, m = meta(path)
+      expect(m["og:image"]).to start_with(base)
+    end
+
+    it "широкую картинку темы берёт и объявляет крупной карточкой" do
+      upload = Fabricate(:image_upload, width: 1200, height: 630)
+      Fabricate(:post, topic: topic, raw: "![скрин](#{upload.url})")
+      topic.update_columns(image_upload_id: upload.id)
+
+      _, m = meta(path)
+      expect(m["og:image"]).to include(upload.url)
+      expect(m["og:image"]).not_to start_with(base)
+      expect(m["twitter:card"]).to eq("summary_large_image")
+      expect(m["twitter:image"]).to eq(m["og:image"])
+    end
+
+    it "различает пропорции сама по себе (контроль правила)" do
+      правило = ->(w, h) { described_class.широкая?(image_width: w, image_height: h) }
+      expect(правило.call(1200, 630)).to eq(true)
+      expect(правило.call(826, 826)).to eq(false)
+      expect(правило.call(858, 1277)).to eq(false)
+      expect(правило.call(400, 210)).to eq(false)
+      expect(правило.call(nil, nil)).to eq(false)
+    end
+  end
 end

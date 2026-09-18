@@ -43,6 +43,22 @@ module ::TerrytrillaSeo
       OG_LOCALES[locale.to_s.downcase.tr("-", "_").split("_").first]
     end
 
+    # B4-бис (замер владельца 18.09). Картинку темы ядро берёт из первой картинки поста,
+    # и у статей базы знаний это скриншот Круга ладов — квадрат 826×826. В карточку
+    # 1.91:1 он не влезает: клиент рисует маленькое превью сбоку, а не крупную карточку.
+    #
+    # Поэтому своя картинка берётся, только если она сама широкая; иначе рисуется
+    # карточка сайта — с заголовком на языке страницы, всегда 1200×630.
+    ШИРИНА_К_ВЫСОТЕ = 1.5
+    МИНИМАЛЬНАЯ_ШИРИНА = 600
+
+    def self.широкая?(opts)
+      ширина = opts[:image_width].to_i
+      высота = opts[:image_height].to_i
+      return false unless ширина.positive? && высота.positive?
+      ширина >= МИНИМАЛЬНАЯ_ШИРИНА && (ширина.to_f / высота) >= ШИРИНА_К_ВЫСОТЕ
+    end
+
     def self.card_url(topic, locale, title)
       base = SiteSetting.terrytrilla_seo_og_card_base.to_s.strip
       return if base.blank?
@@ -100,7 +116,9 @@ module ::TerrytrillaSeo
         opts[:url] = @canonical_url if @canonical_url.present?
 
         card = nil
-        if opts[:image].blank?
+        # Своя картинка годится только широкая: узкую или квадратную клиент покажет
+        # маленьким значком сбоку (B4-бис).
+        if opts[:image].blank? || !TopicMeta.широкая?(opts)
           card = TopicMeta.card_url(topic, I18n.locale, opts[:title])
           if card
             opts[:image] = card
@@ -109,6 +127,11 @@ module ::TerrytrillaSeo
             opts[:image_height] = CARD_HEIGHT
             opts[:image_type] = "image/png"
           end
+        elsif opts[:image].present?
+          # ⚠️ Ядро объявляет `summary_large_image` только когда картинку подставило само.
+          # Широкая картинка темы без этого поля даёт маленькую карточку — тот же дефект,
+          # что 18.09 на главной.
+          opts[:x_summary_large_image] = opts[:image]
         end
 
         html = super(opts)
