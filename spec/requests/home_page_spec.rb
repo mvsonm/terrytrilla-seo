@@ -68,6 +68,85 @@ RSpec.describe TerrytrillaSeo::HomePage do
     expect(home.css("h1")).to be_empty
   end
 
+  # B13-бис. Замер владельца 18.09: у ссылки на раздел карточка есть везде, у ссылки на
+  # главную — только там, где клиент представляется ботом. Причина в том, что тема рисует
+  # свою главную, и ядро отдаёт под неё оболочку без единого мета-тега.
+  describe "карточка ссылки на свою главную" do
+    let(:человек) do
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " \
+        "(KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+    end
+    let(:плагин) { Plugin::Instance.new }
+    let(:своя_главная) { proc { true } }
+
+    # Брендовая картинка — как на проде: без неё ядро ставит маленькую карточку, и
+    # проверка «крупная карточка» проходила бы мимо сути.
+    fab!(:бренд) { Fabricate(:image_upload, width: 1200, height: 630) }
+
+    before { SiteSetting.opengraph_image = бренд }
+
+    def включить_свою_главную
+      DiscoursePluginRegistry.register_modifier(плагин, :custom_homepage_enabled, &своя_главная)
+      @своя_главная_включена = true
+    end
+
+    after do
+      next unless @своя_главная_включена
+      DiscoursePluginRegistry.unregister_modifier(плагин, :custom_homepage_enabled, &своя_главная)
+    end
+
+    def теги(path = "/", ua: человек)
+      get path, headers: { "User-Agent" => ua }
+      expect(response.status).to eq(200)
+      doc = Nokogiri.HTML5(response.body)
+      doc
+        .css("meta")
+        .filter_map do |m|
+          имя = m["property"] || m["name"]
+          [имя, m["content"]] if имя&.start_with?("og:", "twitter:")
+        end
+    end
+
+    it "оболочка своей главной не несёт мета-тегов сама (контроль дефекта)" do
+      включить_свою_главную
+      SiteSetting.terrytrilla_seo_enabled = false
+      expect(теги.map(&:first)).to be_empty
+    end
+
+    it "даёт человеку то же, что боту: имя, описание, картинку и крупную карточку" do
+      включить_свою_главную
+      карточка = теги.to_h
+      expect(карточка["og:title"]).to eq("TerryTrilla Community")
+      expect(карточка["og:description"]).to eq("Harmony, scales and chords")
+      expect(карточка["twitter:card"]).to eq("summary_large_image")
+      expect(карточка["og:url"]).to eq("#{Discourse.base_url}/")
+    end
+
+    it "печатает карточку ровно один раз" do
+      включить_свою_главную
+      expect(теги.map(&:first).count("og:title")).to eq(1)
+    end
+
+    it "не тащит в адрес карточки параметры ссылки" do
+      включить_свою_главную
+      expect(теги("/?ref=telegram").to_h["og:url"]).to eq("#{Discourse.base_url}/")
+    end
+
+    it "молчит на главной, которую рисует ядро: там теги уже есть (контроль)" do
+      expect(теги.map(&:first).count("og:title")).to eq(1)
+    end
+
+    it "молчит на остальных страницах (контроль)" do
+      включить_свою_главную
+      expect(теги("/categories").map(&:first).count("og:title")).to eq(1)
+    end
+
+    it "не удваивает теги краулеру: ему ядро отдаёт categories (контроль)" do
+      включить_свою_главную
+      expect(теги("/", ua: bot).map(&:first).count("og:title")).to eq(1)
+    end
+  end
+
   it "carries core's view unchanged, so a core upgrade cannot drift silently" do
     core = Rails.root.join("app/views/layouts/_noscript_header.html.erb").read
     ours =

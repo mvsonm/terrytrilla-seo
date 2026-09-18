@@ -71,6 +71,14 @@ after_initialize do
     end
   end
 
+  # ── B13-бис: карточка ссылки на главную для НЕ-краулера ────────────────────
+  # Тема рисует свою главную, и ядро отдаёт под неё оболочку без мета-тегов; краулеру
+  # вместо неё подставляется `categories`. Кто представляется браузером — видел ссылку
+  # без описания и картинки (замер владельца 18.09).
+  register_html_builder("server:before-head-close") do |controller|
+    TerrytrillaSeo::HomePage.meta_tags(controller).to_s
+  end
+
   # ── B12: crawler language on a URL without ?tl ─────────────────────────────
   Discourse.singleton_class.prepend(TerrytrillaSeo::CrawlerLocale)
 
