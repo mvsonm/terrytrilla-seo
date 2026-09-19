@@ -127,6 +127,12 @@ RSpec.describe TerrytrillaSeo::Indexing do
   # B16: страницы без темы. Замер 19.09 нашёл два расхождения сразу — дубли
   # заголовков у `/`, `/categories` и `/top` и отсутствие крупного превью у главной.
   describe "страницы без темы" do
+    before do
+      # ⚠️ В свежей тестовой установке «/» — страница установщика, а не список.
+      SiteSetting.has_login_hint = false
+      SiteSetting.top_menu = "categories|latest|top"
+    end
+
     def robots_меты(path)
       get path, headers: { "User-Agent" => "Mozilla/5.0 (compatible; Googlebot/2.1)" }
       expect(response.status).to eq(200)
@@ -144,7 +150,8 @@ RSpec.describe TerrytrillaSeo::Indexing do
     end
 
     it "закрывает списки: они повторяют главную на другом адресе" do
-      %w[/latest /top /categories /new].each do |path|
+      # `/new` и `/unread` гостю закрыты самим ядром — проверяем открытые.
+      %w[/latest /top /categories].each do |path|
         expect(robots_меты(path)).to eq(["noindex"]), "ожидался noindex на #{path}"
       end
     end
