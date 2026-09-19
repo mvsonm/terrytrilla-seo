@@ -12,4 +12,4 @@ jobs:
     with:
       # Pinned to the core commit running on terrytrilla.club (2026.9.0-latest).
       # Bump together with the forum upgrade, never ahead of it.
-      core_ref: c124ff3e49fd3810cc7453cb714571e48a3d7744
+      core_ref: eff621544daf344ce70e470b7f54f27bc75b68d9
