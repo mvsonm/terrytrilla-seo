@@ -116,7 +116,11 @@ RSpec.describe TerrytrillaSeo::HomePage do
     it "даёт человеку то же, что боту: имя, описание, картинку и крупную карточку" do
       включить_свою_главную
       карточка = теги.to_h
-      expect(карточка["og:title"]).to eq("TerryTrilla Community")
+      # B17: заголовок главной несёт подзаголовок на языке страницы, и карточка
+      # обязана совпадать с <title> — расхождение этих двух и было дефектом 19.09.
+      expect(карточка["og:title"]).to eq(
+        "TerryTrilla Community - #{I18n.t("terrytrilla_seo.tagline")}",
+      )
       expect(карточка["og:description"]).to eq("Harmony, scales and chords")
       expect(карточка["twitter:card"]).to eq("summary_large_image")
       expect(карточка["og:url"]).to eq("#{Discourse.base_url}/")

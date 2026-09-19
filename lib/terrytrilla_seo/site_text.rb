@@ -93,7 +93,10 @@ module ::TerrytrillaSeo
     # языке читателя. Слова взяты из утверждённого описания форума и глоссария.
     def self.подзаголовок(locale = I18n.locale)
       return nil unless active?
-      I18n.t("terrytrilla_seo.tagline", locale: locale, default: nil).presence
+      # ⚠️ Через `with_locale`, а не параметром `locale:`. У Discourse переводы
+      # грузятся лениво, по текущему языку: с параметром спек получал пустую
+      # строку на русском при существующем файле перевода.
+      I18n.with_locale(locale) { I18n.t("terrytrilla_seo.tagline", default: nil) }.presence
     end
 
     # Заголовок главной: «Имя сообщества — подзаголовок». На остальных страницах
