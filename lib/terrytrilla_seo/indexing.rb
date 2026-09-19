@@ -94,18 +94,7 @@ module ::TerrytrillaSeo
     # Списки и служебные страницы закрываются, главная и разделы — открыты и просят
     # крупное превью. Это тот же Р-5, что и у тем: в индексе только то, что несёт
     # содержание, а не ещё один срез одного и того же списка.
-    СПИСКИ = %w[
-      /latest
-      /top
-      /categories
-      /new
-      /unread
-      /hot
-      /tags
-      /docs
-      /filter
-      /review
-    ].freeze
+    СПИСКИ = %w[/latest /top /categories /new /unread /hot /tags /docs /filter /review].freeze
 
     def self.robots_meta_for_page(controller)
       return nil unless SiteSetting.terrytrilla_seo_enabled
