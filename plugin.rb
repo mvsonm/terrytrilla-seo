@@ -136,8 +136,14 @@ after_initialize do
   # КАЖДОЙ страницы. Точечные правки этот класс не закрывали: 18.09 починили
   # заголовок темы, 19.09 — описание главной, а лента и раздел остались
   # английскими на всех двенадцати языках (замер 19.09).
-  register_modifier(:meta_data_content) do |content, _тип, _опции|
-    TerrytrillaSeo::SiteText.на_языке_страницы(content)
+  register_modifier(:meta_data_content) do |content, тип, опции|
+    переведено = TerrytrillaSeo::SiteText.на_языке_страницы(content)
+    # B17: подзаголовок — только в заголовке и только на главной.
+    if тип == :title
+      TerrytrillaSeo::SiteText.заголовок_главной(переведено, опции.is_a?(Hash) ? опции[:url] : nil)
+    else
+      переведено
+    end
   end
 
   # ── B7: a knowledge-base article is an Article ─────────────────────────────

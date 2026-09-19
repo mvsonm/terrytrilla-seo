@@ -54,7 +54,9 @@ module ::TerrytrillaSeo
       return "" unless своя_главная?(controller)
       надпись = heading(I18n.locale)
       controller.view_context.crawlable_meta_data(
-        title: надпись[:title],
+        # B17: карточка главной несёт тот же заголовок, что и <title>, — иначе они
+        # разойдутся, а это тот самый класс, на котором обожглись 19.09.
+        title: SiteText.заголовок_главной(надпись[:title], "/"),
         description: надпись[:description],
         # Без явного адреса ядро подставит `request.fullpath`, и «/?ref=x» уехало бы
         # в `og:url` вторым адресом той же страницы.

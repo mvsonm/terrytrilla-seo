@@ -7,3 +7,8 @@ en:
     terrytrilla_seo_organization_url: "Address of the project's site: the author and publisher of knowledge-base articles in structured data."
     terrytrilla_seo_og_card_base: "Address of the site's link-card generator for topics (topic, locale and version are appended). Empty — topics without an image keep the forum's default card."
     terrytrilla_seo_hreflang_excluded_locales: "Languages removed from hreflang by hand (e.g. de, pt_BR), for example when search drops one translated language. A topic's original language is always declared."
+  terrytrilla_seo:
+    # Подзаголовок форума в заголовке главной. Слова взяты из утверждённого
+    # описания форума на этом же языке и из глоссария (лад/аккорд/гармония),
+    # чтобы форум и сайт называли понятия одинаково.
+    tagline: "Music theory community: scales, chords and harmony"
