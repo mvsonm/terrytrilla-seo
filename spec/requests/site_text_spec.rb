@@ -32,6 +32,11 @@ RSpec.describe TerrytrillaSeo::SiteText do
       value: описание_ja,
       localizer_user_id: Discourse.system_user.id,
     )
+    # ⚠️ Язык оригинала у раздела обязателен: ядро не переводит раздел без него
+    # (`show_translated_category?`). На форуме он проставлен у всех одиннадцати
+    # разделов (`locale = "en"`, замер 19.09), а фабрика его не ставит — без этой
+    # строки проверка краулерного заголовка красная на ИСПРАВНОМ коде.
+    knowledge_base.update!(locale: "en")
     CategoryLocalization.create!(
       category_id: knowledge_base.id,
       locale: "ja",
@@ -57,6 +62,31 @@ RSpec.describe TerrytrillaSeo::SiteText do
 
   it "переводит название раздела в заголовке страницы раздела" do
     заголовок = мета("/c/#{knowledge_base.slug}/#{knowledge_base.id}", "ja")[:title]
+
+    expect(заголовок).to include(раздел_ja)
+    expect(заголовок).not_to include("Knowledge Base")
+  end
+
+  # B19-бис. ⚠️ Прежний спек выше смотрел ТОЛЬКО браузерную раскладку и был зелёным,
+  # пока краулерная — та, которую читает Google, — отдавала «最新 Knowledge Base
+  # トピック» на всех языках. Заголовок там собирается интерполяцией
+  # (`js.filters.with_category`), и целой подменой имя раздела не ловится.
+  it "переводит название раздела в заголовке страницы раздела и для краулера" do
+    SiteSetting.set_locale_from_param = true
+    SiteSetting.content_localization_crawler_param = true
+    # ⚠️ Без этой строки спек зелёный на СЛОМАННОМ коде — проверено мутацией.
+    # Ядро берёт интерполированный заголовок («Последние темы в …») только когда
+    # фильтр не совпадает с главной; в чистой установке главная и есть `latest`,
+    # и заголовок собирается как «Имя раздела - Имя сайта» — целую подмену он
+    # проходит и без правки. На форуме главная своя (тема), поэтому там боевой
+    # случай другой. Двигаем главную так же.
+    SiteSetting.top_menu = "categories|latest|new|top"
+    get "/c/#{knowledge_base.slug}/#{knowledge_base.id}?tl=ja",
+        headers: {
+          "User-Agent" => "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+        }
+    expect(response.status).to eq(200)
+    заголовок = Nokogiri.HTML5(response.body).css("title").text
 
     expect(заголовок).to include(раздел_ja)
     expect(заголовок).not_to include("Knowledge Base")
