@@ -28,6 +28,7 @@ require_relative "lib/terrytrilla_seo/article_schema"
 require_relative "lib/terrytrilla_seo/home_page"
 require_relative "lib/terrytrilla_seo/ai_crawlers"
 require_relative "lib/terrytrilla_seo/link_titles"
+require_relative "lib/terrytrilla_seo/category_name"
 
 after_initialize do
   # Every change to core behaviour is listed in README.md («Core touch points»),
@@ -149,9 +150,6 @@ after_initialize do
     # B17: подзаголовок — только в заголовке и только на главной.
     if тип == :title
       адрес = опции.is_a?(Hash) ? опции[:url] : nil
-      # B19-бис: имя раздела внутри «Последние темы в …» — целой подменой не
-      # ловится, ядро собирает строку интерполяцией.
-      переведено = TerrytrillaSeo::SiteText.заголовок_раздела(переведено, адрес)
       TerrytrillaSeo::SiteText.заголовок_главной(переведено, адрес)
     else
       переведено
@@ -163,6 +161,12 @@ after_initialize do
   # потребители сразу: блок ссылок под постом, карта темы, краулерная раскладка и
   # ответы после создания и правки поста. Разбор — lib/terrytrilla_seo/link_titles.rb.
   TopicLink.singleton_class.prepend(TerrytrillaSeo::LinkTitles::Накладка)
+
+  # ── B19-бис: имя раздела на его странице — на языке читателя ───────────────
+  # Подмена в точке, где ядро кладёт раздел в запрос: дальше из этого одного
+  # объекта берутся и заголовок, и <h1>, и подпись RSS. Разбор —
+  # lib/terrytrilla_seo/category_name.rb.
+  ListController.prepend(TerrytrillaSeo::CategoryName)
 
   # ── B7: a knowledge-base article is an Article ─────────────────────────────
   register_modifier(:topic_crawler_container_schema) do |schema, topic|

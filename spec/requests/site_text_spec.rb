@@ -87,10 +87,17 @@ RSpec.describe TerrytrillaSeo::SiteText do
             "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
         }
     expect(response.status).to eq(200)
-    заголовок = Nokogiri.HTML5(response.body).css("title").text
+    страница = Nokogiri.HTML5(response.body)
 
-    expect(заголовок).to include(раздел_ja)
-    expect(заголовок).not_to include("Knowledge Base")
+    expect(страница.css("title").text).to include(раздел_ja)
+    expect(страница.css("title").text).not_to include("Knowledge Base")
+    # ⚠️ И в H1 тоже. Первая правка подменяла имя только в готовой строке
+    # заголовка — и сразу после выката разбор нашёл английское имя в `<h1>` и в
+    # подписи RSS той же страницы: шаблон ядра печатает `@category.name` напрямую.
+    # Теперь подмена стоит там, где ядро кладёт раздел в запрос, и одна проверка
+    # покрывает все три места.
+    expect(страница.css("h1").text).to include(раздел_ja)
+    expect(страница.css("h1").text).not_to include("Knowledge Base")
   end
 
   it "переводит название раздела в хвосте заголовка темы" do
