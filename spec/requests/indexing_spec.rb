@@ -123,4 +123,41 @@ RSpec.describe TerrytrillaSeo::Indexing do
     get "/g"
     expect(response.body).not_to include("noindex")
   end
+
+  # B16: страницы без темы. Замер 19.09 нашёл два расхождения сразу — дубли
+  # заголовков у `/`, `/categories` и `/top` и отсутствие крупного превью у главной.
+  describe "страницы без темы" do
+    def robots_меты(path)
+      get path, headers: { "User-Agent" => "Mozilla/5.0 (compatible; Googlebot/2.1)" }
+      expect(response.status).to eq(200)
+      Nokogiri.HTML5(response.body).css('meta[name="robots"]').map { |m| m["content"] }
+    end
+
+    it "просит крупное превью на главной" do
+      expect(robots_меты("/")).to eq([TerrytrillaSeo::Indexing::INDEXABLE_ROBOTS])
+    end
+
+    it "просит крупное превью на странице раздела" do
+      меты = robots_меты("/c/#{knowledge_base.slug}/#{knowledge_base.id}")
+
+      expect(меты).to eq([TerrytrillaSeo::Indexing::INDEXABLE_ROBOTS])
+    end
+
+    it "закрывает списки: они повторяют главную на другом адресе" do
+      %w[/latest /top /categories /new].each do |path|
+        expect(robots_меты(path)).to eq(["noindex"]), "ожидался noindex на #{path}"
+      end
+    end
+
+    it "не трогает страницы, которые ядро закрывает само (контроль)" do
+      # `/u` и `/badges` ядро закрывает заголовком; своей меты там быть не должно.
+      expect(robots_меты("/badges")).to eq([])
+    end
+
+    it "молчит с выключенным плагином (контроль)" do
+      SiteSetting.terrytrilla_seo_enabled = false
+
+      expect(robots_меты("/latest")).to eq([])
+    end
+  end
 end

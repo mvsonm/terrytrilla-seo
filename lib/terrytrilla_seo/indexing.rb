@@ -75,5 +75,53 @@ module ::TerrytrillaSeo
       return nil if topic.nil?
       indexable?(topic) ? INDEXABLE_ROBOTS : "noindex"
     end
+
+    # B16 (замер владельца 19.09). Правило индексации для страниц БЕЗ темы.
+    #
+    # До него правило знало только темы, и на страницах без темы получалось два
+    # расхождения с требованиями Google сразу:
+    #
+    #   • `/`, `/categories` и `/top` отдавали ОДИН И ТОТ ЖЕ заголовок
+    #     «TerryTrilla Community», каждая самоканонична и открыта индексу. Для
+    #     краулера `/` и `/categories` — вообще одна страница: ядро подставляет
+    #     `custom_homepage_crawler_route = categories`. Это дубли на разных адресах;
+    #   • у главной и разделов не было `max-image-preview:large`, хотя у тем было:
+    #     без него в выдаче и в Discover нет крупной картинки.
+    #
+    # Правило решает по АДРЕСУ, а не по контроллеру: содержимое главной рисует
+    # контроллер разделов, и по нему `/` и `/categories` неразличимы.
+    #
+    # Списки и служебные страницы закрываются, главная и разделы — открыты и просят
+    # крупное превью. Это тот же Р-5, что и у тем: в индексе только то, что несёт
+    # содержание, а не ещё один срез одного и того же списка.
+    СПИСКИ = %w[
+      /latest
+      /top
+      /categories
+      /new
+      /unread
+      /hot
+      /tags
+      /docs
+      /filter
+      /review
+    ].freeze
+
+    def self.robots_meta_for_page(controller)
+      return nil unless SiteSetting.terrytrilla_seo_enabled
+      return nil if controller.is_a?(TopicsController) && controller.action_name == "show"
+
+      # `/g` ядро оставляет открытым, а заголовком это не чинится: оболочку рисует
+      # исключение `check_xhr`, и цепочка `after_action` не исполняется.
+      return "noindex" if controller.is_a?(GroupsController)
+
+      путь = controller.request.path.to_s.chomp("/")
+      путь = "/" if путь.empty?
+      return INDEXABLE_ROBOTS if путь == "/" || путь.start_with?("/c/")
+      return "noindex" if СПИСКИ.any? { |список| путь == список || путь.start_with?("#{список}/") }
+      nil
+    rescue StandardError
+      nil
+    end
   end
 end

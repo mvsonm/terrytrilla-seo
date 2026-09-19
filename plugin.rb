@@ -72,7 +72,8 @@ after_initialize do
     end
   end
 
-  # ── B3-бис: список групп вне индекса ───────────────────────────────────────
+  # ── B3-бис и B16: страницы без темы — списки вне индекса, главная и разделы
+  #    просят крупное превью. Одно правило на все такие страницы (Indexing).
   # Ядро закрывает заголовком `/u`, `/badges` и `/search`, а `/g` остаётся
   # открытым: замер 18.09 агентом Googlebot — 200 БЕЗ `X-Robots-Tag`, и в секции
   # `Googlebot` файла robots.txt запрета тоже нет, он есть только у `*`. Страница
@@ -86,7 +87,8 @@ after_initialize do
   # спеком: заголовка нет). Мета-тег рисуется в самой оболочке и доезжает.
   %w[server:before-head-close server:before-head-close-crawler].each do |outlet|
     register_html_builder(outlet) do |controller|
-      controller.is_a?(GroupsController) ? %(<meta name="robots" content="noindex">) : ""
+      содержимое = TerrytrillaSeo::Indexing.robots_meta_for_page(controller)
+      содержимое ? %(<meta name="robots" content="#{содержимое}">) : ""
     end
   end
 
