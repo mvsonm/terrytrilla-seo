@@ -6,6 +6,7 @@ en:
     terrytrilla_seo_knowledge_base_categories: "Knowledge-base categories: their articles are indexable without replies. Must also be listed in indexable categories."
     terrytrilla_seo_organization_url: "Address of the project's site: the author and publisher of knowledge-base articles in structured data."
     terrytrilla_seo_og_card_base: "Address of the site's link-card generator for topics (topic, locale and version are appended). Empty — topics without an image keep the forum's default card."
+    terrytrilla_seo_favicon_light: "Значок вкладки для СВЕТЛОЙ схемы браузера. Решение владельца 19.09: у него тёмная тема Chrome при светлой схеме ОС, поэтому здесь светлый знак."
     terrytrilla_seo_favicon_dark: "Значок вкладки для ТЁМНОЙ схемы браузера (светлый знак). Ядро отдаёт один значок; этот добавляется тегом с media=(prefers-color-scheme: dark). Пусто — значок один на обе схемы."
     terrytrilla_seo_hreflang_excluded_locales: "Languages removed from hreflang by hand (e.g. de, pt_BR), for example when search drops one translated language. A topic's original language is always declared."
   terrytrilla_seo:

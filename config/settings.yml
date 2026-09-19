@@ -28,3 +28,7 @@ plugins:
     type: upload
     default: ""
     client: false
+  terrytrilla_seo_favicon_light:
+    type: upload
+    default: ""
+    client: false

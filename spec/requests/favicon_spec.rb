@@ -7,6 +7,7 @@
 # понимает (Chrome, Edge, Safari; Firefox — нет, баг 1603885).
 RSpec.describe TerrytrillaSeo::Favicon do
   fab!(:светлый_знак) { Fabricate(:image_upload, width: 512, height: 512) }
+  fab!(:тёмный_знак) { Fabricate(:image_upload, width: 512, height: 512) }
 
   let(:браузер) do
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " \
@@ -30,18 +31,29 @@ RSpec.describe TerrytrillaSeo::Favicon do
       .map { |t| { href: t["href"], media: t["media"] } }
   end
 
-  it "добавляет второй значок с условием тёмной схемы" do
-    SiteSetting.terrytrilla_seo_favicon_dark = светлый_знак
+  it "печатает по значку на каждую схему" do
+    SiteSetting.terrytrilla_seo_favicon_light = светлый_знак
+    SiteSetting.terrytrilla_seo_favicon_dark = тёмный_знак
 
-    тёмные = значки.select { |з| з[:media].to_s.include?("prefers-color-scheme: dark") }
+    по_схемам = значки.filter_map { |з| [з[:media], з[:href]] if з[:media].present? }.to_h
 
-    expect(тёмные.size).to eq(1)
-    expect(тёмные.first[:href]).to include(светлый_знак.sha1[0, 8])
+    expect(по_схемам.keys).to contain_exactly(
+      "(prefers-color-scheme: light)",
+      "(prefers-color-scheme: dark)",
+    )
+    expect(по_схемам["(prefers-color-scheme: light)"]).to include(светлый_знак.sha1[0, 8])
+    expect(по_схемам["(prefers-color-scheme: dark)"]).to include(тёмный_знак.sha1[0, 8])
+  end
+
+  it "печатает только заданное: одна настройка — один тег (контроль)" do
+    SiteSetting.terrytrilla_seo_favicon_light = светлый_знак
+
+    expect(значки.count { |з| з[:media].present? }).to eq(1)
   end
 
   it "оставляет базовый значок без условия — он для поиска и для Firefox (контроль)" do
     SiteSetting.favicon = Fabricate(:image_upload, width: 512, height: 512)
-    SiteSetting.terrytrilla_seo_favicon_dark = светлый_знак
+    SiteSetting.terrytrilla_seo_favicon_light = светлый_знак
 
     без_условия = значки.reject { |з| з[:media].present? }
 
@@ -49,13 +61,14 @@ RSpec.describe TerrytrillaSeo::Favicon do
   end
 
   it "молчит, пока значок не задан (контроль)" do
+    SiteSetting.terrytrilla_seo_favicon_light = ""
     SiteSetting.terrytrilla_seo_favicon_dark = ""
 
     expect(значки.count { |з| з[:media].present? }).to eq(0)
   end
 
   it "молчит с выключенным плагином (контроль)" do
-    SiteSetting.terrytrilla_seo_favicon_dark = светлый_знак
+    SiteSetting.terrytrilla_seo_favicon_light = светлый_знак
     SiteSetting.terrytrilla_seo_enabled = false
 
     expect(значки.count { |з| з[:media].present? }).to eq(0)

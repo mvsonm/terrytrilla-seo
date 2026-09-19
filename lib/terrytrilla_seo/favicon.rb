@@ -24,18 +24,31 @@ module ::TerrytrillaSeo
   # Значит базовый PNG ядра трогать нельзя: он для поиска и для Firefox. Наш тег
   # добавляется ВТОРЫМ и работает там, где `media` поддержан.
   module Favicon
+    # ⚠️ Какой знак какой схеме — РЕШЕНИЕ ВЛАДЕЛЬЦА (19.09), и оно не совпадает с
+    # «по контрасту с полосой вкладок». Разгадка в том, что тёмная полоса у него —
+    # это ТЕМА CHROME, а не схема ОС: сама ОС светлая (сайт открывается в светлой
+    # теме). Значит при `prefers-color-scheme: light` знак ложится на тёмную полосу,
+    # и светлым он там и должен быть. Пара задаётся настройками, а не выводится из
+    # яркости: «правильный» выбор зависит от темы браузера, которую страница не видит.
+    ПАРЫ = {
+      terrytrilla_seo_favicon_light: "(prefers-color-scheme: light)",
+      terrytrilla_seo_favicon_dark: "(prefers-color-scheme: dark)",
+    }.freeze
+
     def self.тег(controller)
       return "" unless SiteSetting.terrytrilla_seo_enabled
       return "" if controller.request.path.start_with?("#{Discourse.base_path}/admin")
 
-      значок = SiteSetting.terrytrilla_seo_favicon_dark
-      return "" unless значок.respond_to?(:url) && значок.url.present?
-
-      адрес = UrlHelper.absolute(значок.url)
-      %(<link rel="icon" type="#{тип(значок)}" href="#{адрес}" ) +
-        %(media="(prefers-color-scheme: dark)">)
+      ПАРЫ.filter_map { |настройка, условие| один(настройка, условие) }.join("\n")
     rescue StandardError
       ""
+    end
+
+    def self.один(настройка, условие)
+      значок = SiteSetting.get(настройка)
+      return nil unless значок.respond_to?(:url) && значок.url.present?
+      адрес = UrlHelper.absolute(значок.url)
+      %(<link rel="icon" type="#{тип(значок)}" href="#{адрес}" media="#{условие}">)
     end
 
     def self.тип(значок)
