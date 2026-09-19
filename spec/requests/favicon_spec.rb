@@ -13,7 +13,13 @@ RSpec.describe TerrytrillaSeo::Favicon do
       "(KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
   end
 
-  before { SiteSetting.terrytrilla_seo_enabled = true }
+  before do
+    SiteSetting.terrytrilla_seo_enabled = true
+    # ⚠️ В свежей тестовой установке «/» — страница установщика, и наши теги там
+    # не печатаются. На это уже наступал спек главной.
+    SiteSetting.has_login_hint = false
+    SiteSetting.top_menu = "categories|latest"
+  end
 
   def значки(path = "/")
     get path, headers: { "User-Agent" => браузер }
