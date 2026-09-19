@@ -19,6 +19,9 @@ RSpec.describe TerrytrillaSeo::SiteText do
 
   before do
     SiteSetting.terrytrilla_seo_enabled = true
+    # Без этого ядро молча отдаёт значение по умолчанию вместо перевода.
+    SiteSetting.content_localization_enabled = true
+    SiteSetting.content_localization_supported_locales = "ja|ru|de"
     SiteSetting.allow_user_locale = true
     SiteSetting.set_locale_from_accept_language_header = true
     SiteSetting.title = "TerryTrilla Community"
@@ -80,5 +83,14 @@ RSpec.describe TerrytrillaSeo::SiteText do
     SiteSetting.terrytrilla_seo_enabled = false
 
     expect(мета("/latest", "ja")[:description]).to eq("Harmony, scales and chords")
+  end
+
+  it "с выключенной локализацией содержимого — тексты по умолчанию (контроль)" do
+    SiteSetting.content_localization_enabled = false
+
+    страница = мета("/c/#{knowledge_base.slug}/#{knowledge_base.id}", "ja")
+
+    expect(страница[:title]).to include("Knowledge Base")
+    expect(страница[:description]).to eq("Harmony, scales and chords")
   end
 end

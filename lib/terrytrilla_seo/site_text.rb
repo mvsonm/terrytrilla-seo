@@ -19,8 +19,13 @@ module ::TerrytrillaSeo
   # описание приходит целиком. Подстрочная замена задела бы чужой текст — например,
   # слово «Questions» внутри заголовка темы.
   module SiteText
+    # ⚠️ Переводы настроек ядро отдаёт ТОЛЬКО при включённой локализации содержимого:
+    # `SiteSettingLocalization.value_for` иначе молча возвращает значение по умолчанию
+    # (`site_setting_localization.rb:30`). Разделы читаются отсюда напрямую, и без этой
+    # проверки они переводились бы при выключенной локализации, а описание сайта — нет.
+    # Правило должно быть одно на все тексты.
     def self.active?
-      SiteSetting.terrytrilla_seo_enabled
+      SiteSetting.terrytrilla_seo_enabled && SiteSetting.content_localization_enabled
     end
 
     # Пары «текст по умолчанию → перевод» для одного языка. Строится из базы, а не из
