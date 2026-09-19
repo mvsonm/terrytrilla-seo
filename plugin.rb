@@ -21,6 +21,7 @@ require_relative "lib/terrytrilla_seo/hreflang"
 require_relative "lib/terrytrilla_seo/crawler_locale_redirect"
 require_relative "lib/terrytrilla_seo/sitemap_topics"
 require_relative "lib/terrytrilla_seo/sitemap_pages"
+require_relative "lib/terrytrilla_seo/favicon"
 require_relative "lib/terrytrilla_seo/site_text"
 require_relative "lib/terrytrilla_seo/topic_meta"
 require_relative "lib/terrytrilla_seo/article_schema"
@@ -92,6 +93,12 @@ after_initialize do
     end
   end
 
+  # ── B18: значок вкладки для тёмной схемы браузера ──────────────────────────
+  # Базовый значок ядра остаётся для поиска и для Firefox, этот добавляется
+  # вторым и включается по `prefers-color-scheme: dark`.
+  %w[server:before-head-close server:before-head-close-crawler].each do |outlet|
+    register_html_builder(outlet) { |controller| TerrytrillaSeo::Favicon.тег(controller) }
+  end
   # ── B13-бис: карточка ссылки на главную для НЕ-краулера ────────────────────
   # Тема рисует свою главную, и ядро отдаёт под неё оболочку без мета-тегов; краулеру
   # вместо неё подставляется `categories`. Кто представляется браузером — видел ссылку

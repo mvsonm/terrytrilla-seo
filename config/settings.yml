@@ -24,3 +24,7 @@ plugins:
   terrytrilla_seo_og_card_base:
     default: "https://terrytrilla.com/api/og/forum"
     client: false
+  terrytrilla_seo_favicon_dark:
+    type: upload
+    default: ""
+    client: false
