@@ -83,7 +83,8 @@ RSpec.describe TerrytrillaSeo::SiteText do
     SiteSetting.top_menu = "categories|latest|new|top"
     get "/c/#{knowledge_base.slug}/#{knowledge_base.id}?tl=ja",
         headers: {
-          "User-Agent" => "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+          "User-Agent" =>
+            "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
         }
     expect(response.status).to eq(200)
     заголовок = Nokogiri.HTML5(response.body).css("title").text

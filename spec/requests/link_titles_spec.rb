@@ -66,11 +66,7 @@ RSpec.describe "B19 · заголовки ссылок на языке чита�
   end
 
   def ссылки_из_json(locale)
-    get "/t/#{источник.id}.json",
-        headers: {
-          "User-Agent" => браузер,
-          "Accept-Language" => locale,
-        }
+    get "/t/#{источник.id}.json", headers: { "User-Agent" => браузер, "Accept-Language" => locale }
     expect(response.status).to eq(200)
     JSON
       .parse(response.body)

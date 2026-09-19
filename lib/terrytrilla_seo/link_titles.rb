@@ -87,7 +87,9 @@ module ::TerrytrillaSeo
     rescue StandardError => e
       # Список ссылок — украшение страницы. Свалить из-за него отрисовку темы
       # нельзя: пусть лучше заголовок останется оригинальным.
-      Rails.logger.warn("terrytrilla-seo: не смог перевести заголовки ссылок: #{e.class}: #{e.message}")
+      Rails.logger.warn(
+        "terrytrilla-seo: не смог перевести заголовки ссылок: #{e.class}: #{e.message}",
+      )
       ряды
     end
 
