@@ -127,6 +127,7 @@ after_initialize do
 
   # ── B4, B5: link card and Open Graph of a topic page ───────────────────────
   ApplicationHelper.prepend(TerrytrillaSeo::TopicMeta::Helper)
+  ApplicationHelper.prepend(TerrytrillaSeo::HomePage::Helper)
 
   # ── B7: a knowledge-base article is an Article ─────────────────────────────
   register_modifier(:topic_crawler_container_schema) do |schema, topic|

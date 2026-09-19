@@ -145,6 +145,55 @@ RSpec.describe TerrytrillaSeo::HomePage do
       включить_свою_главную
       expect(теги("/", ua: bot).map(&:first).count("og:title")).to eq(1)
     end
+
+    # B13-в (замер владельца 19.09). У одной страницы два писателя: `og:description`
+    # печатает плагин и берёт перевод, а `description` ставит ядро прямо из настройки.
+    # Русскому читателю выходила карточка по-русски при английском описании.
+    describe "язык страницы один" do
+      let(:перевод) { "Гармония, гаммы и аккорды" }
+
+      before do
+        SiteSetting.set_locale_from_accept_language_header = true
+        SiteSettingLocalization.create!(
+          setting_name: "site_description",
+          locale: "ru",
+          value: перевод,
+          localizer_user_id: Discourse.system_user.id,
+        )
+      end
+
+      def описание_и_карточка(locale)
+        get "/", headers: { "User-Agent" => человек, "Accept-Language" => locale }
+        expect(response.status).to eq(200)
+        doc = Nokogiri.HTML5(response.body)
+        [
+          doc.css('meta[name="description"]').first&.[]("content"),
+          doc.css('meta[property="og:description"]').first&.[]("content"),
+        ]
+      end
+
+      it "описание и карточка на языке читателя и совпадают" do
+        включить_свою_главную
+        описание, карточка = описание_и_карточка("ru")
+
+        expect(описание).to eq(перевод)
+        expect(карточка).to eq(описание)
+      end
+
+      it "у читателя без перевода — язык по умолчанию, и снова одинаково (контроль)" do
+        включить_свою_главную
+        описание, карточка = описание_и_карточка("de")
+
+        expect(описание).to eq(SiteSetting.site_description)
+        expect(карточка).to eq(описание)
+      end
+
+      it "на главной от ядра описание остаётся ядровым (контроль)" do
+        описание, = описание_и_карточка("ru")
+
+        expect(описание).to eq(SiteSetting.site_description)
+      end
+    end
   end
 
   it "carries core's view unchanged, so a core upgrade cannot drift silently" do

@@ -61,5 +61,27 @@ module ::TerrytrillaSeo
         url: "#{Discourse.base_url}/",
       )
     end
+
+    # B13-в (замер владельца 19.09). На одной странице два языка сразу: карточка
+    # ссылки главной по-русски, а `<meta name="description">` по-английски.
+    #
+    # Причина — два писателя у одной страницы. `og:description` печатает этот плагин
+    # и берёт перевод из `SiteSettingLocalization` (B13-бис), а `description` в
+    # оболочку ставит ЯДРО — прямо из настройки, без перевода. Спрашиваем у того же
+    # источника, что и карточка: язык страницы должен быть один.
+    #
+    # ⚠️ Только на своей главной: на остальных страницах описание ядра верное, и
+    # подмена там сделала бы хуже.
+    module Helper
+      def description_content
+        return super unless HomePage.своя_главная?(controller)
+        HomePage.heading(I18n.locale)[:description].presence || super
+      end
+
+      def title_content
+        return super unless HomePage.своя_главная?(controller)
+        HomePage.heading(I18n.locale)[:title].presence || super
+      end
+    end
   end
 end
