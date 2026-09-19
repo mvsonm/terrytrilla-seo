@@ -204,7 +204,19 @@ module ::TerrytrillaSeo
         на_теме =
           topic_view && controller.is_a?(TopicsController) && controller.action_name == "show"
         return super unless SiteSetting.terrytrilla_seo_enabled
-        return super(TopicMeta.с_размерами_бренда(opts)) unless на_теме
+        # B14: у страниц без темы заголовок и описание карточки — те же тексты
+        # форума, что и в `<title>`. Через модификатор они не проходят (он стоит
+        # на `title_content`/`description_content`), поэтому перевод берётся здесь,
+        # из того же источника: иначе описание страницы и её карточка разошлись бы
+        # по языку — ровно тот дефект, что был на главной 19.09.
+        unless на_теме
+          opts = (opts || {}).dup
+          opts[:title] = SiteText.на_языке_страницы(opts[:title]) if opts[:title].present?
+          if opts[:description].present?
+            opts[:description] = SiteText.на_языке_страницы(opts[:description])
+          end
+          return super(TopicMeta.с_размерами_бренда(opts))
+        end
 
         topic = topic_view.topic
         opts = (opts || {}).dup

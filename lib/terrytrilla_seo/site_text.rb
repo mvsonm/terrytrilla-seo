@@ -1,0 +1,83 @@
+# frozen_string_literal: true
+
+module ::TerrytrillaSeo
+  # B14: тексты форума в `<title>` и описании — на языке страницы, на ЛЮБОЙ странице.
+  #
+  # Замер 19.09.2026 по пяти типам страниц × четыре языка показал, что перевод доезжает
+  # не везде. У статьи и у «/about» всё на языке читателя, а у ленты (`/latest`, `/top`)
+  # и у раздела заголовок и описание оставались английскими на всех двенадцати языках:
+  # ядро берёт их из настройки и из названия раздела, а переводы лежат отдельно
+  # (`SiteSettingLocalization`, `CategoryLocalization`) и в мета-теги не попадали.
+  #
+  # ⚠️ Точечные правки этот класс не закрывают: 18.09 так починили заголовок темы,
+  # 19.09 — описание главной, и каждый раз оставались другие страницы. Поэтому подмена
+  # стоит в ЕДИНСТВЕННОЙ точке, через которую ядро пропускает и заголовок, и описание
+  # любой страницы, — модификатор `:meta_data_content` (`application_helper.rb:302`).
+  # Новая страница и новый раздел попадают под правило сами.
+  #
+  # Заменяются ЦЕЛЫЕ куски, а не подстроки: заголовок ядро собирает через « - », а
+  # описание приходит целиком. Подстрочная замена задела бы чужой текст — например,
+  # слово «Questions» внутри заголовка темы.
+  module SiteText
+    КЕШ_СЕКУНД = 300
+
+    def self.active?
+      SiteSetting.terrytrilla_seo_enabled
+    end
+
+    # Пары «текст по умолчанию → перевод» для одного языка. Строится из базы, а не из
+    # списка в коде: раздел переименуют или добавят — таблица соберётся заново.
+    def self.таблица(locale)
+      ключ = locale.to_s
+      Discourse
+        .cache
+        .fetch("terrytrilla_seo/site_text/#{ключ}", expires_in: КЕШ_СЕКУНД.seconds) do
+          построить(ключ)
+        end
+    end
+
+    def self.построить(locale)
+      пары = {}
+      добавить(пары, SiteSetting.site_description, перевод_настройки(:site_description, locale))
+
+      CategoryLocalization
+        .where(locale: locale)
+        .includes(:category)
+        .find_each do |локализация|
+          раздел = локализация.category
+          next if раздел.nil?
+          добавить(пары, раздел.name, локализация.name)
+          добавить(пары, раздел.description_text, локализация.description)
+        end
+
+      пары
+    end
+
+    def self.добавить(пары, оригинал, перевод)
+      о = оригинал.to_s.strip
+      п = перевод.to_s.strip
+      return if о.blank? || п.blank? || о == п
+      пары[о] = п
+    end
+
+    def self.перевод_настройки(имя, locale)
+      SiteSettingLocalization.value_for(имя, locale: locale.to_s)
+    rescue StandardError
+      nil
+    end
+
+    def self.на_языке_страницы(строка, locale = I18n.locale)
+      return строка unless active?
+      текст = строка.to_s
+      return строка if текст.blank?
+
+      пары = таблица(locale)
+      return строка if пары.empty?
+      return пары[текст] if пары.key?(текст)
+
+      части = текст.split(" - ")
+      return строка if части.size < 2
+      части.map { |часть| пары.fetch(часть.strip, часть) }.join(" - ")
+    end
+  end
+end

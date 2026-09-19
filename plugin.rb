@@ -21,6 +21,7 @@ require_relative "lib/terrytrilla_seo/hreflang"
 require_relative "lib/terrytrilla_seo/crawler_locale_redirect"
 require_relative "lib/terrytrilla_seo/sitemap_topics"
 require_relative "lib/terrytrilla_seo/sitemap_pages"
+require_relative "lib/terrytrilla_seo/site_text"
 require_relative "lib/terrytrilla_seo/topic_meta"
 require_relative "lib/terrytrilla_seo/article_schema"
 require_relative "lib/terrytrilla_seo/home_page"
@@ -127,7 +128,15 @@ after_initialize do
 
   # ── B4, B5: link card and Open Graph of a topic page ───────────────────────
   ApplicationHelper.prepend(TerrytrillaSeo::TopicMeta::Helper)
-  ApplicationHelper.prepend(TerrytrillaSeo::HomePage::Helper)
+
+  # ── B14: тексты форума в мета-тегах — на языке страницы, на любой странице ──
+  # Единственная точка, через которую ядро пропускает и заголовок, и описание
+  # КАЖДОЙ страницы. Точечные правки этот класс не закрывали: 18.09 починили
+  # заголовок темы, 19.09 — описание главной, а лента и раздел остались
+  # английскими на всех двенадцати языках (замер 19.09).
+  register_modifier(:meta_data_content) do |content, _тип, _опции|
+    TerrytrillaSeo::SiteText.на_языке_страницы(content)
+  end
 
   # ── B7: a knowledge-base article is an Article ─────────────────────────────
   register_modifier(:topic_crawler_container_schema) do |schema, topic|
