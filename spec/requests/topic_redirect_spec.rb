@@ -29,10 +29,12 @@ RSpec.describe TopicsController do
     expect(response.location).to end_with("/t/knowledge-base-table-of-contents/#{topic.id}?tl=ja")
   end
 
-  it "drops ?tl when the plugin is disabled — core behaviour (control)" do
+  # Before 2026.11 core dropped ?tl on this redirect and the plugin's modifier put it back. Core keeps
+  # it itself now, so the modifier only guards against a regression; the control states core's rule.
+  it "keeps ?tl with the plugin disabled too — core behaviour since 2026.11 (control)" do
     SiteSetting.terrytrilla_seo_enabled = false
     get "/t/wrong-slug/#{topic.id}?tl=ja"
     expect(response).to have_http_status(:moved_permanently)
-    expect(response.location).not_to include("tl=ja")
+    expect(response.location).to end_with("/t/knowledge-base-table-of-contents/#{topic.id}?tl=ja")
   end
 end
