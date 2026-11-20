@@ -53,7 +53,7 @@ against this list.
 | `lib/terrytrilla_seo/article_schema.rb` + `plugin.rb` | modifier `topic_crawler_container_schema`, JSON-LD in `server:before-head-close-crawler` | B7: a knowledge-base article is `Article` (last word over `discourse-solved`), author and publisher — the project |
 | `lib/terrytrilla_seo/sitemap_topics.rb` | `Sitemap.prepend` — private `sitemap_topics` (relation, filtered by `Indexing.indexable_scope`) and `topics` (lastmod column) | B10: only indexable topics in the sitemap; lastmod = latest reply or revision of the first post. ⚠️ Sitemap pages are cached 24 h and survive a rebuild — delete `sitemap/*` after rollout |
 | `lib/terrytrilla_seo/sitemap_pages.rb`, `app/controllers/terrytrilla_seo/sitemap_pages_controller.rb` | `Sitemap.prepend` (`last_posted_topic`, `topics`), `Sitemap.singleton_class.prepend` (`regenerate_sitemaps`), route `/sitemap_pages.xml` appended to core routes | B10-bis: the home page and the categories in the sitemap. Core lists topics only, and its route accepts numeric sitemap names only. The record in `sitemaps` puts the map into core's index without overriding the view; `regenerate_sitemaps` must re-add the name, otherwise the nightly job disables it |
-| `lib/terrytrilla_seo/crawler_locale.rb` | `Discourse.singleton_class.prepend` — `anonymous_locale` | B12: a crawler without `?tl` gets the default language, Accept-Language ignored; the anonymous cache key uses the same method |
+| `lib/terrytrilla_seo/crawler_locale.rb` | `Discourse.singleton_class.prepend` — `anonymous_locale(request, include_param:)` | B12: a crawler without `?tl` gets the default language, Accept-Language ignored; the anonymous cache key uses the same method. **The signature must follow core** (since 2026.11 core calls it with `include_param: false`; a narrower signature is an `ArgumentError` on every `?tl` page) |
 
 ## Indexing rule (B3)
 
@@ -72,7 +72,7 @@ against this list.
 
 
 The plugin is developed against a local Discourse of **the same version as production**
-(`2026.9.0-latest`, core commit `c124ff3e49fd3810cc7453cb714571e48a3d7744`), never on the
+(`2026.11.0-latest.2`, core commit `ca040eb9b21071717e3733e60b6e8f47f6722f9d`), never on the
 live forum. CI runs lint and specs on `discourse/discourse_test` with the same core commit.
 
 ```bash

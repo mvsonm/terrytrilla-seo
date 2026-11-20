@@ -12,9 +12,15 @@ module ::TerrytrillaSeo
   # So for a crawler without `?tl` Accept-Language is ignored. `?tl=de` still works, and
   # people are untouched. The anonymous cache key is built from the same method
   # (Middleware::AnonymousCache#key_locale), so the cache stays consistent.
+  #
+  # Since 2026.11 core also asks what the plain URL would serve (`include_param: false`): for the
+  # anonymous cache key of a `?tl` page and to choose between the plain URL and `?tl=<default>`
+  # in hreflang, canonical and links. A crawler gets the same rule there — the param is left out,
+  # so the default language unless a locale cookie says otherwise.
   module CrawlerLocale
-    def anonymous_locale(request)
-      if SiteSetting.terrytrilla_seo_enabled && request.params[Discourse::LOCALE_PARAM].blank? &&
+    def anonymous_locale(request, include_param: true)
+      if SiteSetting.terrytrilla_seo_enabled &&
+           (!include_param || request.params[Discourse::LOCALE_PARAM].blank?) &&
            CrawlerDetection.crawler?(request.user_agent, request.get_header("HTTP_VIA"))
         return HttpLanguageParser.parse(locale_from_cookie(request))
       end
