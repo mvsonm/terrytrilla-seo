@@ -72,7 +72,7 @@ against this list.
 
 
 The plugin is developed against a local Discourse of **the same version as production**
-(`2026.11.0-latest.2`, core commit `ca040eb9b21071717e3733e60b6e8f47f6722f9d`), never on the
+(`2026.11.0-latest.2`, core commit `a9a81ced2826bfadf3a3d93fcc3c05522554a5fc`), never on the
 live forum. CI runs lint and specs on `discourse/discourse_test` with the same core commit.
 
 ```bash

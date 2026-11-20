@@ -10,6 +10,6 @@ jobs:
   ci:
     uses: discourse/.github/.github/workflows/discourse-plugin.yml@v1
     with:
-      # Pinned to the core commit running on terrytrilla.club (2026.11.0-latest.2, upgrade 20.11.2026).
+      # Pinned to the core commit running on terrytrilla.club (2026.11.0-latest.2 + 48, rebuild 20.11.2026).
       # Bump together with the forum upgrade, never ahead of it.
-      core_ref: ca040eb9b21071717e3733e60b6e8f47f6722f9d
+      core_ref: a9a81ced2826bfadf3a3d93fcc3c05522554a5fc
